@@ -13,12 +13,12 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({ genome, currentT
   const pixelsPerSecond = 180; // Increased for better resolution on 5s
 
   return (
-    <div className={`w-full rounded-xl border p-4 overflow-x-auto transition-colors duration-300 ${
+    <div className={`w-full rounded-xl border p-2 md:p-4 overflow-x-auto transition-colors duration-300 ${
       theme === "dark" 
         ? "bg-zinc-900/50 border-white/10" 
         : "bg-white border-black"
     }`}>
-      <div className="relative" style={{ width: `${maxDuration * pixelsPerSecond}px`, minHeight: "200px" }}>
+      <div className="relative" style={{ width: `${maxDuration * pixelsPerSecond}px`, minHeight: "160px" }}>
         {/* Playhead */}
         <motion.div 
           className="absolute top-0 bottom-0 w-0.5 bg-emerald-500 z-10"
@@ -27,17 +27,17 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({ genome, currentT
         />
 
         {/* Layers */}
-        <div className="space-y-4">
+        <div className="space-y-2 md:space-y-4">
           {(genome.layers || []).map((layer, idx) => (
-            <div key={layer.layerId} className={`relative h-12 rounded-lg border group transition-colors duration-300 ${
+            <div key={layer.layerId} className={`relative h-10 md:h-12 rounded-lg border group transition-colors duration-300 ${
               theme === "dark"
                 ? "bg-white/5 border-white/5"
                 : "bg-zinc-100/50 border-black/10"
             }`}>
-              <div className={`absolute -left-2 top-1/2 -translate-y-1/2 -translate-x-full pr-4 text-[10px] uppercase tracking-widest font-mono font-bold ${
+              <div className={`absolute -left-1 md:-left-2 top-1/2 -translate-y-1/2 -translate-x-full pr-2 md:pr-4 text-[8px] md:text-[10px] uppercase tracking-widest font-mono font-bold text-right min-w-[60px] ${
                 theme === "dark" ? "text-zinc-500" : "text-zinc-900"
               }`}>
-                {layer.layerId}
+                {layer.role || layer.layerId}
               </div>
               {(layer.events || []).map((event) => (
                 <motion.div

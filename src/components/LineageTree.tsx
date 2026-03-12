@@ -32,7 +32,7 @@ export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenome
                 onClick={() => onSelect(g)}
                 aria-current={isActive ? "true" : undefined}
                 aria-label={`Generation ${g.generation}: ${g.summary}`}
-                className={`flex-1 text-left p-3 rounded-lg border transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
+                className={`flex-1 text-left p-2 md:p-3 rounded-lg border transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
                   isActive
                     ? "bg-emerald-600/10 border-emerald-600 text-emerald-600 font-bold"
                     : theme === "dark"
@@ -41,10 +41,10 @@ export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenome
                 }`}
               >
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-mono">GEN {g.generation}</span>
-                  <span className="text-[10px] opacity-50">{g.genomeId.slice(-4)}</span>
+                  <span className="text-[9px] md:text-[10px] font-mono">GEN {g.generation}</span>
+                  <span className="text-[9px] md:text-[10px] opacity-50">{g.genomeId.slice(-4)}</span>
                 </div>
-                <p className="text-xs mt-1 line-clamp-1 italic opacity-80">
+                <p className="text-[10px] md:text-xs mt-0.5 md:mt-1 line-clamp-1 italic opacity-80">
                   {g.summary}
                 </p>
               </button>

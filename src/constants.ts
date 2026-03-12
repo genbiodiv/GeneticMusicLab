@@ -37,6 +37,16 @@ export const DEFAULT_GENOME: MusicalGenome = {
         { eventId: "b3", sampleId: "bass_01", start: 2, duration: 0.5, gain: 0.7, pitchShift: -12 },
         { eventId: "b4", sampleId: "bass_01", start: 3, duration: 0.5, gain: 0.7, pitchShift: -12 },
       ]
+    },
+    {
+      layerId: "melody",
+      role: "melody",
+      events: [
+        { eventId: "m1", sampleId: "lead_01", start: 0.25, duration: 0.25, gain: 0.5, pitchShift: 0 },
+        { eventId: "m2", sampleId: "lead_01", start: 1.25, duration: 0.25, gain: 0.5, pitchShift: 4 },
+        { eventId: "m3", sampleId: "lead_01", start: 2.25, duration: 0.25, gain: 0.5, pitchShift: 7 },
+        { eventId: "m4", sampleId: "lead_01", start: 3.25, duration: 0.25, gain: 0.5, pitchShift: 5 },
+      ]
     }
   ],
   regulatoryRules: [],

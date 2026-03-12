@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import * as Tone from "tone";
 import { MusicalGenome, MutationFilters } from "./types";
 import { generateInitialGenome, mutateGenome } from "./services/evolutionService";
 import { usePlaybackEngine } from "./hooks/usePlaybackEngine";
@@ -28,8 +29,9 @@ import {
   BookOpen,
   HelpCircle,
   X,
+  GitBranch,
   Download,
-  GitBranch
+  Upload
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -57,6 +59,22 @@ export default function App() {
 
   const { play, stop, isPlaying, isLoaded, currentTime } = usePlaybackEngine();
 
+  // Audio context resume on first interaction for mobile
+  useEffect(() => {
+    const resumeAudio = async () => {
+      if (Tone.context.state !== "running") {
+        await Tone.start();
+        await Tone.context.resume();
+      }
+    };
+    window.addEventListener("click", resumeAudio, { once: true });
+    window.addEventListener("touchstart", resumeAudio, { once: true });
+    return () => {
+      window.removeEventListener("click", resumeAudio);
+      window.removeEventListener("touchstart", resumeAudio);
+    };
+  }, []);
+
   const getAncestryPath = () => {
     if (!currentGenome) return [];
     const path: MusicalGenome[] = [];
@@ -72,6 +90,48 @@ export default function App() {
       }
     }
     return path;
+  };
+
+  const handleExportSession = () => {
+    if (!currentGenome) return;
+    const sessionData = {
+      currentGenome,
+      lineage,
+      version: "1.0"
+    };
+    const blob = new Blob([JSON.stringify(sessionData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `genetic-music-session-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportSession = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (data.currentGenome && Array.isArray(data.lineage)) {
+          setLineage(data.lineage);
+          setCurrentGenome(data.currentGenome);
+          setInitialOptions(null);
+          setOffspring(null);
+        } else {
+          alert(t.sessionError);
+        }
+      } catch (err) {
+        console.error("Import failed", err);
+        alert(t.sessionError);
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.target.value = "";
   };
 
   const handleInitialGenerate = async () => {
@@ -131,36 +191,6 @@ export default function App() {
     setOffspring(null);
   };
 
-  const handleDownload = () => {
-    if (lineage.length === 0) return;
-    
-    const exportData = {
-      experimentId: `music-lab-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      totalGenerations: lineage.length,
-      lineage: lineage.map(g => ({
-        generation: g.generation,
-        genomeId: g.genomeId,
-        parentId: g.parentId,
-        summary: g.summary,
-        tempo: g.tempo,
-        timeSignature: g.timeSignature,
-        mutationHistory: g.mutationHistory,
-        layers: g.layers
-      }))
-    };
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `musical-lineage-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const handleLoadStarter = () => {
     const starter = { ...DEFAULT_GENOME, genomeId: `starter_${Date.now()}` };
     setCurrentGenome(starter);
@@ -181,17 +211,17 @@ export default function App() {
       {/* Header */}
       <header 
         role="banner"
-        className={`border-b p-6 flex justify-between items-center backdrop-blur-md sticky top-0 z-50 ${
+        className={`border-b p-4 md:p-6 flex flex-col sm:flex-row justify-between items-center gap-4 backdrop-blur-md sticky top-0 z-50 ${
           theme === "dark" ? "border-white/10 bg-[#050505]/80" : "border-black bg-white/80"
         }`}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)]" aria-hidden="true">
-            <Dna className="text-white" size={24} />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)]" aria-hidden="true">
+            <Dna className="text-white" size={20} />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">{t.title}</h1>
-            <p className={`text-[10px] uppercase tracking-[0.2em] font-mono font-bold ${
+            <h1 className="text-lg md:text-xl font-bold tracking-tight">{t.title}</h1>
+            <p className={`text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-mono font-bold ${
               theme === "dark" ? "text-zinc-400" : "text-zinc-600"
             }`}>
               {isLoaded ? t.subtitle : t.loading}
@@ -199,109 +229,111 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex items-center gap-4" aria-label="Global controls">
-          <button
-            onClick={() => setLang(lang === "en" ? "es" : "en")}
-            className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
-              theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
-            }`}
-            aria-label={lang === "en" ? "Cambiar a Español" : "Switch to English"}
-          >
-            <Languages size={20} />
-          </button>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
-              theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
-            }`}
-            aria-label={theme === "dark" ? "Switch to High Contrast Light Mode" : "Switch to Dark Mode"}
-          >
-            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-          <button
-            onClick={() => setShowInstructions(true)}
-            className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
-              theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
-            }`}
-            aria-label="View Lab Instructions"
-            title="Instructions"
-          >
-            <HelpCircle size={20} />
-          </button>
-
-          {currentGenome && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleDownload}
-                className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
-                  theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
-                }`}
-                aria-label={t.download}
-                title={t.download}
-              >
-                <Download size={20} />
-              </button>
-              <button
-                onClick={() => {
-                  setCurrentGenome(null);
-                  setLineage([]);
-                }}
-                className={`px-4 py-2 text-[10px] font-mono transition-all uppercase tracking-widest font-bold focus:ring-2 focus:ring-red-500 outline-none ${
-                  theme === "dark" ? "text-zinc-400 hover:text-red-400" : "text-zinc-700 hover:text-red-600"
-                }`}
-              >
-                {t.reset}
-              </button>
-            </div>
-          )}
-          {lineage.length === 0 ? (
+        <nav className="flex items-center justify-between sm:justify-end gap-2 md:gap-4 w-full sm:w-auto" aria-label="Global controls">
+          <div className="flex items-center gap-1 md:gap-2">
             <button
-              onClick={handleInitialGenerate}
-              disabled={isGenerating}
-              aria-busy={isGenerating}
-              className="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-full hover:bg-emerald-500 transition-all flex items-center gap-2 disabled:opacity-50 focus:ring-4 focus:ring-emerald-400 outline-none"
+              onClick={() => setLang(lang === "en" ? "es" : "en")}
+              className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
+                theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
+              }`}
+              aria-label={lang === "en" ? "Cambiar a Español" : "Switch to English"}
             >
-              {isGenerating ? <RefreshCw className="animate-spin" size={18} /> : <Activity size={18} />}
-              {t.initialize}
+              <Languages size={18} />
             </button>
-          ) : (
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
+                theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
+              }`}
+              aria-label={theme === "dark" ? "Switch to High Contrast Light Mode" : "Switch to Dark Mode"}
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              onClick={() => setShowInstructions(true)}
+              className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
+                theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
+              }`}
+              aria-label="View Lab Instructions"
+              title="Instructions"
+            >
+              <HelpCircle size={18} />
+            </button>
+
+            <div className="h-4 w-px bg-zinc-800 mx-1 hidden xs:block" />
+
+            <button
+              onClick={handleExportSession}
+              disabled={!currentGenome}
+              title={t.exportSession}
+              className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-emerald-500 outline-none disabled:opacity-30 ${
+                theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
+              }`}
+            >
+              <Download size={18} />
+            </button>
+
+            <label className={`p-2 rounded-lg cursor-pointer transition-all focus-within:ring-4 focus-within:ring-emerald-500 outline-none ${
+              theme === "dark" ? "hover:bg-white/5 text-zinc-400" : "hover:bg-black/5 text-zinc-700"
+            }`}>
+              <Upload size={18} />
+              <input type="file" accept=".json" onChange={handleImportSession} className="sr-only" />
+            </label>
+
+            <button
+              onClick={() => {
+                setCurrentGenome(null);
+                setLineage([]);
+                setInitialOptions(null);
+                setOffspring(null);
+              }}
+              title={t.reset}
+              className={`p-2 rounded-lg transition-all focus:ring-4 focus:ring-red-500 outline-none ${
+                theme === "dark" ? "hover:bg-red-500/10 text-zinc-500 hover:text-red-500" : "hover:bg-red-500/10 text-zinc-500 hover:text-red-500"
+              }`}
+            >
+              <RefreshCw size={18} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {currentGenome && (
               <button
                 onClick={() => isPlaying ? stop() : play(currentGenome)}
                 disabled={!isLoaded}
                 aria-label={isPlaying ? "Stop music" : "Play music"}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
+                className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
                   !isLoaded ? "opacity-50 cursor-not-allowed bg-zinc-600" :
                   isPlaying ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
                 }`}
               >
-                {!isLoaded ? <RefreshCw className="animate-spin" size={20} /> :
-                 isPlaying ? <Square size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
+                {!isLoaded ? <RefreshCw className="animate-spin" size={18} /> :
+                 isPlaying ? <Square size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </nav>
       </header>
 
-      <main className="p-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="p-4 md:p-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         {/* Left Column: Controls & Lineage */}
-        <aside className="lg:col-span-3 space-y-8" aria-label="Genome management">
+        <aside className="lg:col-span-3 space-y-4 md:space-y-8" aria-label="Genome management">
           {currentGenome && (
             <>
               <section 
-                className={`rounded-2xl border p-5 space-y-6 ${
+                className={`rounded-xl md:rounded-2xl border p-3 md:p-5 space-y-4 md:space-y-6 ${
                   theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-sm"
                 }`}
                 aria-labelledby="mutation-controls-title"
               >
                 <div className="flex items-center gap-2 text-emerald-600">
-                  <Settings2 size={16} aria-hidden="true" />
-                  <h2 id="mutation-controls-title" className="text-xs font-mono uppercase tracking-widest font-bold">{t.mutationParams}</h2>
+                  <Settings2 size={14} className="md:w-4 md:h-4" aria-hidden="true" />
+                  <h2 id="mutation-controls-title" className="text-[10px] md:text-xs font-mono uppercase tracking-widest font-bold">{t.mutationParams}</h2>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <div>
-                    <label htmlFor="mutation-rate" className="flex justify-between text-[10px] text-zinc-500 mb-2 font-mono font-bold">
+                    <label htmlFor="mutation-rate" className="flex justify-between text-[9px] md:text-[10px] text-zinc-500 mb-1 md:mb-2 font-mono font-bold">
                       <span>{t.mutationRate}</span>
                       <span>{(mutationRate * 100).toFixed(0)}%</span>
                     </label>
@@ -313,7 +345,7 @@ export default function App() {
                       step="0.1"
                       value={mutationRate}
                       onChange={(e) => setMutationRate(parseFloat(e.target.value))}
-                      className="w-full accent-emerald-600 h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
+                      className="w-full accent-emerald-600 h-1.5 md:h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
 
@@ -325,7 +357,7 @@ export default function App() {
                       onClick={() => setIntensity("conservative")}
                       aria-pressed={intensity === "conservative"}
                       title={t.conservativeDesc}
-                      className={`flex-1 py-2 text-[10px] font-mono rounded-md transition-all focus:ring-2 focus:ring-emerald-500 outline-none ${
+                      className={`flex-1 py-1.5 md:py-2 text-[9px] md:text-[10px] font-mono rounded-md transition-all focus:ring-2 focus:ring-emerald-500 outline-none ${
                         intensity === "conservative" ? "bg-emerald-600 text-white font-bold" : "text-zinc-500"
                       }`}
                     >
@@ -335,7 +367,7 @@ export default function App() {
                       onClick={() => setIntensity("radical")}
                       aria-pressed={intensity === "radical"}
                       title={t.radicalDesc}
-                      className={`flex-1 py-2 text-[10px] font-mono rounded-md transition-all focus:ring-2 focus:ring-emerald-500 outline-none ${
+                      className={`flex-1 py-1.5 md:py-2 text-[9px] md:text-[10px] font-mono rounded-md transition-all focus:ring-2 focus:ring-emerald-500 outline-none ${
                         intensity === "radical" ? "bg-emerald-600 text-white font-bold" : "text-zinc-500"
                       }`}
                     >
@@ -344,13 +376,13 @@ export default function App() {
                   </fieldset>
 
                   <div className="space-y-2">
-                    <p className="text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.mutationFocus}</p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <p className="text-[9px] md:text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.mutationFocus}</p>
+                    <div className="grid grid-cols-3 gap-1.5 md:gap-2">
                       {(['drums', 'bass', 'melody'] as const).map((role) => (
                         <button
                           key={role}
                           onClick={() => setMutationFilters(prev => ({ ...prev, [role]: !prev[role] }))}
-                          className={`py-2 text-[8px] font-mono rounded-lg border transition-all ${
+                          className={`py-1.5 md:py-2 text-[7px] md:text-[8px] font-mono rounded-lg border transition-all ${
                             mutationFilters[role] 
                               ? "bg-emerald-600/20 border-emerald-600 text-emerald-600 font-bold" 
                               : "bg-transparent border-zinc-800 text-zinc-500"
@@ -394,7 +426,7 @@ export default function App() {
             <section className="space-y-8" aria-labelledby="initial-selection-title">
               <div className="text-center space-y-2">
                 <div className="flex justify-center items-center gap-4">
-                  <h2 id="initial-selection-title" className="text-2xl font-bold text-emerald-600">Choose Your Root Ancestor</h2>
+                  <h2 id="initial-selection-title" className="text-2xl font-bold text-emerald-600">{t.chooseRootAncestor}</h2>
                   <button
                     onClick={() => setInitialOptions(null)}
                     className={`p-2 rounded-full transition-all hover:bg-red-500/10 text-zinc-500 hover:text-red-500`}
@@ -402,22 +434,22 @@ export default function App() {
                     <X size={20} />
                   </button>
                 </div>
-                <p className="text-zinc-500 text-sm max-w-2xl mx-auto">Select one of these 4 unique genetic sequences to begin your evolutionary journey.</p>
+                <p className="text-zinc-500 text-sm max-w-2xl mx-auto">{t.selectAncestorDesc}</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                 {initialOptions.map((genome, idx) => (
                   <motion.div
                     key={genome.genomeId}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 }}
-                    className={`rounded-3xl border-2 p-6 space-y-4 transition-all ${
+                    className={`rounded-2xl md:rounded-3xl border-2 p-4 md:p-6 space-y-4 transition-all ${
                       theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-lg"
                     }`}
                   >
                     <div className="flex justify-between items-center">
-                      <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-wider">Option {idx + 1}</h3>
+                      <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-wider">{t.option} {idx + 1}</h3>
                       <button
                         onClick={() => play(genome)}
                         className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 transition-all"
@@ -430,7 +462,7 @@ export default function App() {
                       {genome.summary}
                     </p>
 
-                    <div className={`h-24 overflow-hidden rounded-xl border transition-colors duration-300 ${
+                    <div className={`h-48 overflow-hidden rounded-xl border transition-colors duration-300 ${
                       theme === "dark" ? "bg-black/20 border-white/5" : "bg-zinc-100 border-zinc-200"
                     }`}>
                       <GenomeTimeline genome={genome} currentTime={-1} theme={theme} />
@@ -441,7 +473,7 @@ export default function App() {
                       className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-all flex items-center justify-center gap-2"
                     >
                       <Activity size={18} />
-                      SELECT THIS ANCESTOR
+                      {t.selectThisAncestor}
                     </button>
                   </motion.div>
                 ))}
@@ -501,7 +533,7 @@ export default function App() {
                   <button
                     onClick={() => setOffspring(null)}
                     className={`p-2 rounded-full transition-all hover:bg-red-500/10 text-zinc-500 hover:text-red-500`}
-                    title="Leave Selection Chamber"
+                    title={t.leaveSelectionRoom}
                   >
                     <X size={20} />
                   </button>
@@ -509,13 +541,13 @@ export default function App() {
                 <p className="text-zinc-500 text-sm max-w-2xl mx-auto">{t.selectionDesc}</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
                 {offspring.map((child, idx) => (
                   <motion.div
                     key={child.genomeId}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`rounded-3xl border-2 p-6 space-y-6 transition-all ${
+                    className={`rounded-2xl md:rounded-3xl border-2 p-4 md:p-6 space-y-4 md:space-y-6 transition-all ${
                       theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-lg"
                     }`}
                   >
@@ -562,38 +594,38 @@ export default function App() {
           ) : (
             <>
               {/* Genome Overview */}
-              <section className="grid grid-cols-1 md:grid-cols-3 gap-4" aria-label="Genome statistics">
-                <div className={`rounded-2xl border p-4 flex items-center gap-4 ${
+              <section className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4" aria-label="Genome statistics">
+                <div className={`rounded-xl md:rounded-2xl border p-3 md:p-4 flex items-center gap-3 md:gap-4 ${
                   theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-sm"
                 }`}>
-                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600" aria-hidden="true">
-                    <Activity size={20} />
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600" aria-hidden="true">
+                    <Activity size={18} />
                   </div>
                   <div>
-                    <p className="text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.tempo}</p>
-                    <p className="text-lg font-bold">{currentGenome.tempo} BPM</p>
+                    <p className="text-[8px] md:text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.tempo}</p>
+                    <p className="text-sm md:text-lg font-bold">{currentGenome.tempo} BPM</p>
                   </div>
                 </div>
-                <div className={`rounded-2xl border p-4 flex items-center gap-4 ${
+                <div className={`rounded-xl md:rounded-2xl border p-3 md:p-4 flex items-center gap-3 md:gap-4 ${
                   theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-sm"
                 }`}>
-                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600" aria-hidden="true">
-                    <History size={20} />
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600" aria-hidden="true">
+                    <History size={18} />
                   </div>
                   <div>
-                    <p className="text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.generation}</p>
-                    <p className="text-lg font-bold">{currentGenome.generation}</p>
+                    <p className="text-[8px] md:text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.generation}</p>
+                    <p className="text-sm md:text-lg font-bold">{currentGenome.generation}</p>
                   </div>
                 </div>
-                <div className={`rounded-2xl border p-4 flex items-center gap-4 ${
+                <div className={`rounded-xl md:rounded-2xl border p-3 md:p-4 flex items-center gap-3 md:gap-4 col-span-2 md:col-span-1 ${
                   theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-sm"
                 }`}>
-                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600" aria-hidden="true">
-                    <Info size={20} />
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600" aria-hidden="true">
+                    <Info size={18} />
                   </div>
                   <div>
-                    <p className="text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.duration}</p>
-                    <p className="text-lg font-bold">{currentGenome.durationTarget.toFixed(2)}s</p>
+                    <p className="text-[8px] md:text-[10px] text-zinc-500 font-mono uppercase font-bold">{t.duration}</p>
+                    <p className="text-sm md:text-lg font-bold">{currentGenome.durationTarget.toFixed(2)}s</p>
                   </div>
                 </div>
               </section>
@@ -612,7 +644,7 @@ export default function App() {
                         theme === "dark" ? "bg-white/5 border-white/10 text-zinc-500 hover:text-emerald-400" : "bg-zinc-100 border-black text-zinc-700 hover:text-emerald-600"
                       }`}
                     >
-                      VIEW PATH
+                      {t.viewPath}
                     </button>
                     <button 
                       onClick={() => setShowHistory(!showHistory)}
@@ -696,7 +728,7 @@ export default function App() {
                 </h3>
                 <button 
                   onClick={() => setShowInstructions(false)}
-                  aria-label="Close instructions"
+                  aria-label={t.closeInstructions}
                   className={`p-2 rounded-full transition-all focus:ring-2 focus:ring-emerald-500 outline-none ${
                     theme === "dark" ? "hover:bg-white/5" : "hover:bg-black/5"
                   }`}
@@ -806,7 +838,7 @@ export default function App() {
                         </p>
                         <div className="mt-3 flex gap-4 text-[10px] text-zinc-500 font-mono">
                           <span>{genome.tempo} BPM</span>
-                          <span>{genome.layers.length} LAYERS</span>
+                          <span>{genome.layers.length} {t.layers}</span>
                         </div>
                       </div>
                     </div>

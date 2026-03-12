@@ -6,51 +6,118 @@ import { DEFAULT_GENOME, SAMPLE_LIBRARY } from "../constants";
  * Replaces AI integration with local deterministic/probabilistic logic.
  */
 
-export async function generateInitialGenome(count: number = 1): Promise<MusicalGenome[]> {
+export async function generateInitialGenome(count: number = 4): Promise<MusicalGenome[]> {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
   const genomes: MusicalGenome[] = [];
   
-  const summaries = [
-    "Steady Pulse - A rhythmic foundation with balanced layers.",
-    "Melodic Spark - Focused on high-register sequences and clear themes.",
-    "Deep Resonance - Heavy bass emphasis with atmospheric textures.",
-    "Chaotic Growth - A dense, high-energy sequence with complex interactions."
+  const styles = [
+    {
+      name: "Techno Pulse",
+      summary: "High-energy 4/4 industrial beat with driving bass and sharp leads.",
+      tempo: 128,
+      drums: [
+        { id: "kick_01", times: [0, 1, 2, 3, 4] },
+        { id: "snare_01", times: [1, 3] },
+        { id: "hihat_01", times: [0.5, 1.5, 2.5, 3.5, 4.5] }
+      ],
+      bass: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5],
+      melody: [0.25, 1.25, 2.25, 3.25, 4.25]
+    },
+    {
+      name: "Ambient Drift",
+      summary: "Ethereal soundscapes with slow-evolving pads and minimal percussion.",
+      tempo: 70,
+      drums: [
+        { id: "kick_01", times: [0, 4] },
+        { id: "hihat_01", times: [2] }
+      ],
+      bass: [0, 2.5],
+      melody: [0.5, 3.5]
+    },
+    {
+      name: "Neo-Funk",
+      summary: "Syncopated rhythmic patterns with groovy basslines and playful melodies.",
+      tempo: 105,
+      drums: [
+        { id: "kick_01", times: [0, 0.75, 2, 2.75] },
+        { id: "snare_01", times: [1, 3] },
+        { id: "hihat_01", times: [0.25, 0.5, 1.25, 1.5, 2.25, 2.5, 3.25, 3.5] }
+      ],
+      bass: [0, 0.75, 1.5, 2, 2.75, 3.5],
+      melody: [0.5, 1, 2.5, 3]
+    },
+    {
+      name: "Glitch Core",
+      summary: "Erratic, high-speed sequences with chaotic pitch shifts and unpredictable timing.",
+      tempo: 160,
+      drums: [
+        { id: "kick_01", times: [0, 0.1, 0.5, 1.2, 2, 2.1, 3.5] },
+        { id: "snare_01", times: [0.8, 1.8, 2.8, 3.8] },
+        { id: "hihat_01", times: [0.05, 0.15, 0.25, 0.35, 1.05, 2.05, 3.05] }
+      ],
+      bass: [0.1, 1.1, 2.1, 3.1],
+      melody: [0.2, 0.4, 0.6, 1.2, 1.4, 2.2, 2.4, 3.2, 3.4]
+    }
   ];
 
   for (let i = 0; i < count; i++) {
+    const style = styles[i % styles.length];
     const id = `gen_${Math.random().toString(36).substring(2, 11)}`;
-    const baseGenome = JSON.parse(JSON.stringify(DEFAULT_GENOME));
     
-    // Add some variety to initial genomes
-    if (i === 1) { // Melodic
-      baseGenome.tempo = 110;
-      baseGenome.layers.forEach(l => {
-        if (l.role === 'Melody') l.events.forEach(e => e.gain *= 1.2);
-      });
-    } else if (i === 2) { // Bass
-      baseGenome.tempo = 95;
-      baseGenome.layers.forEach(l => {
-        if (l.role === 'Bass') l.events.forEach(e => e.gain *= 1.3);
-      });
-    } else if (i === 3) { // Chaotic
-      baseGenome.tempo = 140;
-      baseGenome.layers.forEach(l => {
-        l.events.forEach(e => {
-          e.start = Math.random() * baseGenome.durationTarget;
-          e.pitchShift += (Math.random() > 0.5 ? 7 : -5);
-        });
-      });
-    }
-
-    genomes.push({
-      ...baseGenome,
+    const genome: MusicalGenome = {
       genomeId: id,
+      parentId: null,
       rootAncestorId: id,
+      durationTarget: 5,
+      tempo: style.tempo,
+      timeSignature: "4/4",
       generation: 0,
-      summary: summaries[i % summaries.length]
-    });
+      summary: style.summary,
+      regulatoryRules: [],
+      mutationHistory: [],
+      layers: [
+        {
+          layerId: "drums",
+          role: "drums",
+          events: style.drums.flatMap(d => d.times.map((t, idx) => ({
+            eventId: `d_${i}_${idx}_${Math.random()}`,
+            sampleId: d.id,
+            start: t,
+            duration: 0.1,
+            gain: 0.7,
+            pitchShift: 0
+          })))
+        },
+        {
+          layerId: "bass",
+          role: "bass",
+          events: style.bass.map((t, idx) => ({
+            eventId: `b_${i}_${idx}_${Math.random()}`,
+            sampleId: i === 1 ? "pad_01" : "bass_01",
+            start: t,
+            duration: i === 1 ? 2 : 0.4,
+            gain: 0.6,
+            pitchShift: -12
+          }))
+        },
+        {
+          layerId: "melody",
+          role: "melody",
+          events: style.melody.map((t, idx) => ({
+            eventId: `m_${i}_${idx}_${Math.random()}`,
+            sampleId: i === 1 ? "pad_01" : "lead_01",
+            start: t,
+            duration: i === 1 ? 3 : 0.3,
+            gain: 0.5,
+            pitchShift: Math.floor(Math.random() * 12)
+          }))
+        }
+      ]
+    };
+
+    genomes.push(genome);
   }
 
   return genomes;
