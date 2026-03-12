@@ -6,11 +6,18 @@ export const translations = {
     reset: "Reset Lab",
     download: "Download Lineage Data",
     initialize: "Initialize Lab",
+    loadStarter: "Load Starter Template",
     evolve: "Evolve Genome",
     mutationParams: "Mutation Params",
     mutationRate: "Mutation Rate",
     conservative: "Conservative",
     radical: "Radical",
+    conservativeDesc: "Small, incremental changes. Like point mutations, it preserves the core structure while tweaking details.",
+    radicalDesc: "Large, structural changes. Can duplicate, invert, or completely re-randomize sections of the genome.",
+    mutationFocus: "Mutation Focus",
+    filterDrums: "Drums",
+    filterBass: "Bass",
+    filterMelody: "Melody",
     tempo: "Tempo",
     generation: "Generation",
     duration: "Duration",
@@ -26,31 +33,15 @@ export const translations = {
     die: "Die",
     selectionRoom: "Selection Chamber",
     selectionDesc: "Two descendants have been born. Choose the one you want to survive. The survivor will become the parent of the next generation.",
-    instructionsTitle: "How to Play",
+    instructionsTitle: "Lab Instructions",
     instructions: [
-      "Initialize: Click 'Initialize Lab' to generate your first musical sequence (the 'Root Ancestor').",
-      "Listen: Use the Play button to hear the current generation.",
-      "Evolve: Adjust the Mutation Rate and Intensity, then click 'Evolve' to create a descendant.",
-      "Lineage: Track the evolutionary path in the sidebar. You can return to any previous generation.",
-      "Phenotype: The timeline shows the 'genes' (musical events) of the current sequence."
-    ],
-    challengesTitle: "Learning Challenges",
-    challenges: [
-      {
-        id: 1,
-        title: "The Bottleneck Effect",
-        desc: "Try evolving a genome with a very low mutation rate (10%) for 5 generations. How similar does the music stay? This simulates genetic stability."
-      },
-      {
-        id: 2,
-        title: "Macro-Mutation",
-        desc: "Use 'Radical' intensity with 80% mutation rate. Can you still recognize the original melody? This explores how major mutations can lead to entirely new 'species' of sound."
-      },
-      {
-        id: 3,
-        title: "Selective Breeding",
-        desc: "Evolve 3 different branches from the same ancestor. Which one sounds more 'rhythmic'? This mimics how environmental pressures (or your taste) select for specific traits."
-      }
+      "Root Initialization: Click 'Initialize Lab' to generate your first musical sequence. You can choose from 4 distinct 'Root Ancestors', each with a unique genetic profile (Tempo, Density, and Tone).",
+      "Musical Phenotype (Timeline): The central visualization shows the 'genes' of your music. Each block represents a musical event. In Light Mode, these are clear and high-contrast. You can see the layers for Drums, Bass, and Melody.",
+      "Mutation Parameters: Use the left sidebar to influence evolution. 'Mutation Rate' determines how many genes change. 'Conservative' mode performs point mutations (tweaking notes), while 'Radical' mode performs structural mutations (duplications, inversions, or re-randomization).",
+      "Mutation Focus: Toggle specific filters (Drums, Bass, Melody) to protect certain parts of the genome from mutation while evolving others.",
+      "Evolve & Selection: Clicking 'Evolve' takes you to the 'Selection Chamber'. Two unique descendants are born based on your parameters. You must listen to both and select the survivor to continue the lineage.",
+      "Evolutionary Path: The right sidebar tracks every generation. Use 'VIEW PATH' to see the direct ancestry of your current genome. You can click any previous generation to 'time travel' and start a new evolutionary branch from that point.",
+      "Playback Control: Use the global Play/Stop buttons. The engine uses high-quality synthesis to turn the genetic data into sound in real-time."
     ]
   },
   es: {
@@ -60,11 +51,18 @@ export const translations = {
     reset: "Reiniciar Lab",
     download: "Descargar Datos de Linaje",
     initialize: "Inicializar Lab",
+    loadStarter: "Cargar Plantilla Inicial",
     evolve: "Evolucionar Genoma",
     mutationParams: "Parámetros de Mutación",
     mutationRate: "Tasa de Mutación",
     conservative: "Conservador",
     radical: "Radical",
+    conservativeDesc: "Cambios pequeños e incrementales. Como las mutaciones puntuales, preserva la estructura central mientras ajusta detalles.",
+    radicalDesc: "Cambios grandes y estructurales. Puede duplicar, invertir o re-aleatorizar completamente secciones del genoma.",
+    mutationFocus: "Enfoque de Mutación",
+    filterDrums: "Batería",
+    filterBass: "Bajo",
+    filterMelody: "Melodía",
     tempo: "Tempo",
     generation: "Generación",
     duration: "Duración",
@@ -80,31 +78,15 @@ export const translations = {
     die: "Morir",
     selectionRoom: "Cámara de Selección",
     selectionDesc: "Han nacido dos descendientes. Elige el que quieras que sobreviva. El sobreviviente se convertirá en el progenitor de la próxima generación.",
-    instructionsTitle: "Cómo Jugar",
+    instructionsTitle: "Instrucciones del Lab",
     instructions: [
-      "Inicializar: Haz clic en 'Inicializar Lab' para generar tu primera secuencia musical (el 'Ancestro Raíz').",
-      "Escuchar: Usa el botón de Play para escuchar la generación actual.",
-      "Evolucionar: Ajusta la Tasa de Mutación y la Intensidad, luego haz clic en 'Evolucionar' para crear un descendiente.",
-      "Linaje: Rastrea el camino evolutivo en la barra lateral. Puedes volver a cualquier generación anterior.",
-      "Fenotipo: La línea de tiempo muestra los 'genes' (eventos musicales) de la secuencia actual."
-    ],
-    challengesTitle: "Desafíos de Aprendizaje",
-    challenges: [
-      {
-        id: 1,
-        title: "El Efecto Cuello de Botella",
-        desc: "Intenta evolucionar un genoma con una tasa de mutación muy baja (10%) durante 5 generaciones. ¿Qué tan similar se mantiene la música? Esto simula la estabilidad genética."
-      },
-      {
-        id: 2,
-        title: "Macro-Mutación",
-        desc: "Usa intensidad 'Radical' con una tasa de mutación del 80%. ¿Aún puedes reconocer la melodía original? Esto explora cómo las mutaciones mayores pueden dar lugar a 'especies' de sonido completamente nuevas."
-      },
-      {
-        id: 3,
-        title: "Cría Selectiva",
-        desc: "Evoluciona 3 ramas diferentes del mismo ancestro. ¿Cuál suena más 'rítmica'? Esto imita cómo las presiones ambientales (o tu gusto) seleccionan rasgos específicos."
-      }
+      "Inicialización Raíz: Haz clic en 'Inicializar Lab' para generar tu primera secuencia. Puedes elegir entre 4 'Ancestros Raíz' distintos, cada uno con un perfil genético único (Tempo, Densidad y Tono).",
+      "Fenotipo Musical (Timeline): La visualización central muestra los 'genes' de tu música. Cada bloque representa un evento musical. En el Modo Claro, estos son nítidos y de alto contraste. Puedes ver las capas de Batería, Bajo y Melodía.",
+      "Parámetros de Mutación: Usa la barra lateral izquierda para influir en la evolución. La 'Tasa de Mutación' determina cuántos genes cambian. El modo 'Conservador' realiza mutaciones puntuales (ajuste de notas), mientras que el modo 'Radical' realiza mutaciones estructurales (duplicaciones, inversiones o re-aleatorización).",
+      "Enfoque de Mutación: Activa filtros específicos (Batería, Bajo, Melodía) para proteger ciertas partes del genoma de la mutación mientras evolucionas otras.",
+      "Evolución y Selección: Al hacer clic en 'Evolucionar' entrarás en la 'Cámara de Selección'. Nacen dos descendientes únicos basados en tus parámetros. Debes escuchar ambos y seleccionar al sobreviviente para continuar el linaje.",
+      "Camino Evolutivo: La barra lateral derecha rastrea cada generación. Usa 'VIEW PATH' para ver la ascendencia directa de tu genoma actual. Puedes hacer clic en cualquier generación anterior para 'viajar en el tiempo' y comenzar una nueva rama evolutiva desde ese punto.",
+      "Control de Reproducción: Usa los botones globales de Play/Stop. El motor utiliza síntesis de alta calidad para convertir los datos genéticos en sonido en tiempo real."
     ]
   }
 };

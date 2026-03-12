@@ -66,10 +66,14 @@ export function usePlaybackEngine() {
   const play = async (genome: MusicalGenome) => {
     if (!isLoaded) return;
     
-    stop();
-    await Tone.start();
+    try {
+      stop();
+      await Tone.start();
+      if (Tone.context.state !== "running") {
+        await Tone.context.resume();
+      }
 
-    const events: any[] = [];
+      const events: any[] = [];
     (genome.layers || []).forEach((layer) => {
       (layer.events || []).forEach((event) => {
         events.push({
@@ -100,8 +104,8 @@ export function usePlaybackEngine() {
     }, events).start(0);
 
     Tone.Transport.bpm.value = genome.tempo;
-    Tone.Destination.volume.value = 0; // Ensure master is at 0dB (not muted)
-    Tone.Transport.start();
+    Tone.Destination.volume.value = -3; // Set to -3dB to avoid clipping
+    Tone.Transport.start("+0.1");
     setIsPlaying(true);
 
     // Update current time
@@ -112,6 +116,9 @@ export function usePlaybackEngine() {
         clearInterval(interval);
       }
     }, 100);
+    } catch (error) {
+      console.error("Audio playback failed", error);
+    }
   };
 
   return { play, stop, isPlaying, isLoaded, currentTime };

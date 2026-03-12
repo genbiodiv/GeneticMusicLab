@@ -72,3 +72,9 @@ export interface LineageNode {
   genome: MusicalGenome;
   children: LineageNode[];
 }
+
+export interface MutationFilters {
+  drums: boolean;
+  bass: boolean;
+  melody: boolean;
+}

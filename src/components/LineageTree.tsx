@@ -8,12 +8,15 @@ interface LineageTreeProps {
   currentGenomeId: string;
   onSelect: (genome: MusicalGenome) => void;
   title: string;
+  theme?: "dark" | "light";
 }
 
-export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenomeId, onSelect, title }) => {
+export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenomeId, onSelect, title, theme = "dark" }) => {
   return (
     <nav className="space-y-2" aria-label={title}>
-      <div className="flex items-center gap-2 text-zinc-500 mb-4" aria-hidden="true">
+      <div className={`flex items-center gap-2 mb-4 transition-colors duration-300 ${
+        theme === "dark" ? "text-zinc-500" : "text-zinc-900"
+      }`} aria-hidden="true">
         <GitBranch size={16} />
         <h3 className="text-xs font-mono uppercase tracking-widest font-bold">{title}</h3>
       </div>
@@ -22,7 +25,9 @@ export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenome
           const isActive = g.genomeId === currentGenomeId;
           return (
             <div key={g.genomeId} className="flex items-center gap-2">
-              {idx > 0 && <div className="w-4 h-px bg-zinc-800" aria-hidden="true" />}
+              {idx > 0 && <div className={`w-4 h-px transition-colors duration-300 ${
+                theme === "dark" ? "bg-zinc-800" : "bg-zinc-300"
+              }`} aria-hidden="true" />}
               <button
                 onClick={() => onSelect(g)}
                 aria-current={isActive ? "true" : undefined}
@@ -30,7 +35,9 @@ export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenome
                 className={`flex-1 text-left p-3 rounded-lg border transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
                   isActive
                     ? "bg-emerald-600/10 border-emerald-600 text-emerald-600 font-bold"
-                    : "bg-white/5 border-zinc-800 text-zinc-500 hover:bg-white/10"
+                    : theme === "dark"
+                      ? "bg-white/5 border-zinc-800 text-zinc-500 hover:bg-white/10"
+                      : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
                 }`}
               >
                 <div className="flex justify-between items-center">
