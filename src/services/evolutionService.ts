@@ -14,8 +14,8 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
   
   const styles = [
     {
-      name: "Techno Pulse",
-      summary: "High-energy 4/4 industrial beat with driving bass and sharp leads.",
+      nameKey: "styleTechno",
+      summaryKey: "styleTechnoDesc",
       tempo: 128,
       drums: [
         { id: "kick_01", times: [0, 1, 2, 3, 4] },
@@ -26,8 +26,8 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
       melody: [0.25, 1.25, 2.25, 3.25, 4.25]
     },
     {
-      name: "Ambient Drift",
-      summary: "Ethereal soundscapes with slow-evolving pads and minimal percussion.",
+      nameKey: "styleAmbient",
+      summaryKey: "styleAmbientDesc",
       tempo: 70,
       drums: [
         { id: "kick_01", times: [0, 4] },
@@ -37,8 +37,8 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
       melody: [0.5, 3.5]
     },
     {
-      name: "Neo-Funk",
-      summary: "Syncopated rhythmic patterns with groovy basslines and playful melodies.",
+      nameKey: "styleFunk",
+      summaryKey: "styleFunkDesc",
       tempo: 105,
       drums: [
         { id: "kick_01", times: [0, 0.75, 2, 2.75] },
@@ -49,8 +49,8 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
       melody: [0.5, 1, 2.5, 3]
     },
     {
-      name: "Glitch Core",
-      summary: "Erratic, high-speed sequences with chaotic pitch shifts and unpredictable timing.",
+      nameKey: "styleGlitch",
+      summaryKey: "styleGlitchDesc",
       tempo: 160,
       drums: [
         { id: "kick_01", times: [0, 0.1, 0.5, 1.2, 2, 2.1, 3.5] },
@@ -74,7 +74,7 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
       tempo: style.tempo,
       timeSignature: "4/4",
       generation: 0,
-      summary: style.summary,
+      summary: style.summaryKey, // Store key for translation
       regulatoryRules: [],
       mutationHistory: [],
       layers: [
@@ -82,7 +82,7 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
           layerId: "drums",
           role: "drums",
           events: style.drums.flatMap(d => d.times.map((t, idx) => ({
-            eventId: `d_${i}_${idx}_${Math.random()}`,
+            eventId: `d_${i}_${idx}_${Math.random().toString(36).substring(2, 11)}`,
             sampleId: d.id,
             start: t,
             duration: 0.1,
@@ -94,7 +94,7 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
           layerId: "bass",
           role: "bass",
           events: style.bass.map((t, idx) => ({
-            eventId: `b_${i}_${idx}_${Math.random()}`,
+            eventId: `b_${i}_${idx}_${Math.random().toString(36).substring(2, 11)}`,
             sampleId: i === 1 ? "pad_01" : "bass_01",
             start: t,
             duration: i === 1 ? 2 : 0.4,
@@ -106,7 +106,7 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
           layerId: "melody",
           role: "melody",
           events: style.melody.map((t, idx) => ({
-            eventId: `m_${i}_${idx}_${Math.random()}`,
+            eventId: `m_${i}_${idx}_${Math.random().toString(36).substring(2, 11)}`,
             sampleId: i === 1 ? "pad_01" : "lead_01",
             start: t,
             duration: i === 1 ? 3 : 0.3,
@@ -127,10 +127,11 @@ export async function mutateGenome(
   genome: MusicalGenome, 
   mutationRate: number, 
   intensity: "conservative" | "radical",
-  filters: MutationFilters
+  filters: MutationFilters,
+  options: { pitchGate?: boolean, variantType?: number } = {}
 ): Promise<MusicalGenome> {
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1200));
+  await new Promise(resolve => setTimeout(resolve, 800));
 
   // Deep clone the genome
   const newGenome: MusicalGenome = JSON.parse(JSON.stringify(genome));
@@ -141,6 +142,7 @@ export async function mutateGenome(
   newGenome.mutationHistory = [];
 
   const isConservative = intensity === "conservative";
+  const { pitchGate = false, variantType = 2 } = options;
 
   newGenome.layers.forEach(layer => {
     const role = layer.role.toLowerCase();
@@ -154,9 +156,27 @@ export async function mutateGenome(
     if (!shouldMutate) return;
 
     layer.events = layer.events.map(event => {
+      // Variant 3: Just shuffle instruments, no structural mutation
+      if (variantType === 3) {
+        const relevantSamples = SAMPLE_LIBRARY.filter(s => {
+          if (role.includes('drum')) return s.role === 'percussion';
+          if (role.includes('bass')) return s.role === 'bass';
+          return s.role === 'melody' || s.role === 'pad';
+        });
+        
+        const newEvent = { ...event, eventId: `e_${Math.random().toString(36).substring(2, 11)}` };
+        if (relevantSamples.length > 0) {
+          newEvent.sampleId = relevantSamples[Math.floor(Math.random() * relevantSamples.length)].id;
+        }
+        return newEvent;
+      }
+
+      // Variant 1: First 3 seconds identical
+      if (variantType === 1 && event.start < 3) return event;
+
       if (Math.random() > mutationRate) return event;
 
-      const mutatedEvent = { ...event, eventId: `e_${Math.random().toString(36).substring(2, 7)}` };
+      const mutatedEvent = { ...event, eventId: `e_${Math.random().toString(36).substring(2, 11)}` };
 
       if (isConservative) {
         // Small tweaks
@@ -181,28 +201,78 @@ export async function mutateGenome(
         }
       }
 
+      // Apply Pitch Gate
+      if (pitchGate && mutatedEvent.pitchShift > 12) {
+        mutatedEvent.pitchShift = 12;
+      }
+
       return mutatedEvent;
     });
 
     // Radical mode: add or remove events
-    if (!isConservative && Math.random() < mutationRate) {
+    if (!isConservative && Math.random() < mutationRate && variantType !== 3) {
       if (Math.random() > 0.4 && layer.events.length < 16) {
         // Add event
         const baseEvent = layer.events[Math.floor(Math.random() * layer.events.length)] || DEFAULT_GENOME.layers[0].events[0];
+        const newStart = Math.random() * newGenome.durationTarget;
+        
+        // Variant 1 check
+        if (variantType === 1 && newStart < 3) return;
+
         layer.events.push({
           ...baseEvent,
-          eventId: `e_${Math.random().toString(36).substring(2, 7)}`,
-          start: Math.random() * newGenome.durationTarget,
+          eventId: `e_${Math.random().toString(36).substring(2, 11)}`,
+          start: newStart,
           pitchShift: baseEvent.pitchShift + (Math.random() > 0.5 ? 12 : -12)
         });
       } else if (layer.events.length > 1) {
         // Remove event
-        layer.events.splice(Math.floor(Math.random() * layer.events.length), 1);
+        const idx = Math.floor(Math.random() * layer.events.length);
+        // Variant 1 check
+        if (variantType === 1 && layer.events[idx].start < 3) return;
+        layer.events.splice(idx, 1);
       }
     }
   });
 
-  newGenome.summary = `Generation ${newGenome.generation} - ${intensity.toUpperCase()} local mutation at ${Math.round(mutationRate * 100)}% rate.`;
+  const variantNames = ["", "variant1", "variant2", "variant3"];
+  newGenome.summary = `Generation ${newGenome.generation} - ${variantNames[variantType]}`;
   
+  return newGenome;
+}
+
+export async function recombineGenomes(
+  genomeA: MusicalGenome,
+  genomeB: MusicalGenome
+): Promise<MusicalGenome> {
+  // Simulate delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  const newGenome: MusicalGenome = JSON.parse(JSON.stringify(genomeA));
+  newGenome.genomeId = `rec_${Math.random().toString(36).substring(2, 11)}`;
+  newGenome.parentId = `${genomeA.genomeId}+${genomeB.genomeId}`;
+  newGenome.generation = Math.max(genomeA.generation, genomeB.generation) + 1;
+  newGenome.summary = "Recombination of survivors";
+
+  // Mix layers
+  newGenome.layers = newGenome.layers.map((layer, idx) => {
+    const otherLayer = genomeB.layers[idx];
+    if (!otherLayer) return layer;
+
+    // Mix events within the layer
+    const splitA = Math.floor(layer.events.length * Math.random());
+    const splitB = Math.floor(otherLayer.events.length * Math.random());
+    
+    const mixedEvents = [
+      ...layer.events.slice(0, splitA),
+      ...otherLayer.events.slice(splitB)
+    ].map(event => ({
+      ...event,
+      eventId: `e_${Math.random().toString(36).substring(2, 11)}`
+    }));
+    
+    return { ...layer, events: JSON.parse(JSON.stringify(mixedEvents)) };
+  });
+
   return newGenome;
 }

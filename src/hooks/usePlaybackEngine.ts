@@ -8,7 +8,6 @@ export function usePlaybackEngine() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const synthsRef = useRef<Map<string, any>>(new Map());
-  const partRef = useRef<Tone.Part | null>(null);
 
   useEffect(() => {
     // Initialize synths based on library
@@ -50,15 +49,12 @@ export function usePlaybackEngine() {
 
     return () => {
       synthsRef.current.forEach(s => s.dispose());
-      partRef.current?.dispose();
     };
   }, []);
 
   const stop = () => {
     Tone.Transport.stop();
     Tone.Transport.cancel();
-    partRef.current?.dispose();
-    partRef.current = null;
     setIsPlaying(false);
     setCurrentTime(0);
   };
@@ -69,53 +65,42 @@ export function usePlaybackEngine() {
     try {
       stop();
       await Tone.start();
+      
+      // Ensure context is running
       if (Tone.context.state !== "running") {
         await Tone.context.resume();
       }
 
-      const events: any[] = [];
-    (genome.layers || []).forEach((layer) => {
-      (layer.events || []).forEach((event) => {
-        events.push({
-          time: Number(event.start),
-          sampleId: event.sampleId,
-          duration: Number(event.duration),
-          gain: Number(event.gain),
-          pitchShift: Number(event.pitchShift),
+      Tone.Transport.bpm.value = genome.tempo;
+      Tone.Destination.volume.value = -3;
+
+      (genome.layers || []).forEach((layer) => {
+        (layer.events || []).forEach((event) => {
+          Tone.Transport.schedule((time) => {
+            const synth = synthsRef.current.get(event.sampleId);
+            if (synth) {
+              const note = Tone.Frequency("C4").transpose(event.pitchShift).toNote();
+              const gain = Math.max(event.gain || 0.5, 0.4);
+              synth.triggerAttackRelease(note, event.duration, time, gain);
+            }
+          }, event.start);
         });
       });
-    });
 
-    partRef.current = new Tone.Part((time, value) => {
-      const synth = synthsRef.current.get(value.sampleId);
-      if (synth) {
-        // Map pitchShift to MIDI note (0 = C4)
-        const note = Tone.Frequency("C4").transpose(value.pitchShift).toNote();
-        const gain = Math.max(value.gain || 0.5, 0.4); // Ensure minimum audibility
-        
-        if (synth instanceof Tone.PolySynth) {
-          synth.triggerAttackRelease(note, value.duration, time, gain);
-        } else if (synth instanceof Tone.MembraneSynth || synth instanceof Tone.MetalSynth) {
-          synth.triggerAttackRelease(note, value.duration, time, gain);
-        } else {
-          (synth as any).triggerAttackRelease(note, value.duration, time, gain);
-        }
-      }
-    }, events).start(0);
+      // Schedule time updates
+      Tone.Transport.scheduleRepeat((time) => {
+        Tone.Draw.schedule(() => {
+          const now = Tone.Transport.seconds;
+          setCurrentTime(now);
+          if (now >= genome.durationTarget) {
+            stop();
+          }
+        }, time);
+      }, 0.05);
 
-    Tone.Transport.bpm.value = genome.tempo;
-    Tone.Destination.volume.value = -3; // Set to -3dB to avoid clipping
-    Tone.Transport.start("+0.1");
-    setIsPlaying(true);
-
-    // Update current time
-    const interval = setInterval(() => {
-      setCurrentTime(Tone.Transport.seconds);
-      if (Tone.Transport.seconds >= genome.durationTarget) {
-        stop();
-        clearInterval(interval);
-      }
-    }, 100);
+      Tone.Transport.seconds = 0;
+      Tone.Transport.start("+0.1");
+      setIsPlaying(true);
     } catch (error) {
       console.error("Audio playback failed", error);
     }
