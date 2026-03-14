@@ -4,10 +4,11 @@ import { SAMPLE_LIBRARY } from "../constants";
 import { useState, useEffect, useRef } from "react";
 
 export function usePlaybackEngine() {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [status, setStatus] = useState<"playing" | "paused" | "stopped">("stopped");
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const synthsRef = useRef<Map<string, any>>(new Map());
+  const currentGenomeId = useRef<string | null>(null);
 
   useEffect(() => {
     // Initialize synths based on library
@@ -55,21 +56,46 @@ export function usePlaybackEngine() {
   const stop = () => {
     Tone.Transport.stop();
     Tone.Transport.cancel();
-    setIsPlaying(false);
+    setStatus("stopped");
     setCurrentTime(0);
+    currentGenomeId.current = null;
+  };
+
+  const pause = () => {
+    Tone.Transport.pause();
+    setStatus("paused");
+  };
+
+  const resume = async () => {
+    await Tone.start();
+    if (Tone.context.state !== "running") {
+      await Tone.context.resume();
+    }
+    Tone.Transport.start();
+    setStatus("playing");
   };
 
   const play = async (genome: MusicalGenome) => {
     if (!isLoaded) return;
     
     try {
-      stop();
       await Tone.start();
       
       // Ensure context is running
       if (Tone.context.state !== "running") {
         await Tone.context.resume();
       }
+
+      // If it's the same genome and we are paused, just resume
+      if (currentGenomeId.current === genome.genomeId && status === "paused") {
+        Tone.Transport.start();
+        setStatus("playing");
+        return;
+      }
+
+      // Otherwise, stop and reschedule
+      stop();
+      currentGenomeId.current = genome.genomeId;
 
       Tone.Transport.bpm.value = genome.tempo;
       Tone.Destination.volume.value = -3;
@@ -100,11 +126,11 @@ export function usePlaybackEngine() {
 
       Tone.Transport.seconds = 0;
       Tone.Transport.start("+0.1");
-      setIsPlaying(true);
+      setStatus("playing");
     } catch (error) {
       console.error("Audio playback failed", error);
     }
   };
 
-  return { play, stop, isPlaying, isLoaded, currentTime };
+  return { play, pause, stop, resume, status, isPlaying: status === "playing", isLoaded, currentTime };
 }

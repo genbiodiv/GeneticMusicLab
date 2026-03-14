@@ -11,6 +11,8 @@ interface GenomeTimelineProps {
   onZoomChange?: (zoom: number) => void;
   onEventMove?: (layerId: string, eventId: string, newStart: number) => void;
   overlayGenomes?: MusicalGenome[];
+  lineage?: MusicalGenome[];
+  analysisMode?: boolean;
   labels?: {
     zoomIn: string;
     zoomOut: string;
@@ -26,6 +28,8 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   onZoomChange,
   onEventMove,
   overlayGenomes = [],
+  lineage = [],
+  analysisMode = false,
   labels
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,6 +37,47 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   const duration = genome.durationTarget || 5;
   const basePixelsPerSecond = 180;
   const pixelsPerSecond = basePixelsPerSecond * (zoom ?? 1);
+
+  // Helper to determine conservation status of an event
+  const getConservationStatus = (layerId: string, event: any) => {
+    if (!analysisMode || lineage.length === 0) return null;
+
+    // Ancestors are all lineage members except the current one
+    const ancestors = lineage.filter(g => g.genomeId !== genome.genomeId);
+    if (ancestors.length === 0) return "conserved"; // Root is conserved by default
+
+    let matchCount = 0;
+    ancestors.forEach(ancestor => {
+      const ancestorLayer = ancestor.layers.find(l => l.layerId === layerId);
+      if (ancestorLayer) {
+        const hasMatch = ancestorLayer.events.some(e => 
+          e.sampleId === event.sampleId && 
+          Math.abs(e.start - event.start) < 0.01 && 
+          Math.abs(e.duration - event.duration) < 0.01
+        );
+        if (hasMatch) matchCount++;
+      }
+    });
+
+    if (matchCount === ancestors.length) return "conserved";
+    if (matchCount > 0) return "shared";
+    return "unique";
+  };
+
+  const getEventColor = (status: string | null) => {
+    if (!status) return theme === "dark" ? "bg-emerald-500/30 border-emerald-500/50" : "bg-emerald-400 border-emerald-600";
+    
+    switch (status) {
+      case "conserved":
+        return theme === "dark" ? "bg-green-500/40 border-green-500" : "bg-green-400 border-green-600";
+      case "shared":
+        return theme === "dark" ? "bg-yellow-500/40 border-yellow-500" : "bg-yellow-400 border-yellow-600";
+      case "unique":
+        return theme === "dark" ? "bg-red-500/40 border-red-500" : "bg-red-400 border-red-600";
+      default:
+        return theme === "dark" ? "bg-emerald-500/30 border-emerald-500/50" : "bg-emerald-400 border-emerald-600";
+    }
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -197,9 +242,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
                     key={event.eventId}
                     onMouseDown={(e) => handleMouseDown(e, layer.layerId, event.eventId, event.start)}
                     className={`absolute border rounded-sm flex items-center justify-center overflow-hidden transition-colors duration-300 z-10 cursor-grab active:cursor-grabbing ${
-                      theme === "dark"
-                        ? "bg-emerald-500/30 border-emerald-500/50"
-                        : "bg-emerald-400 border-emerald-600"
+                      getEventColor(getConservationStatus(layer.layerId, event))
                     }`}
                     style={{
                       top: overlayGenomes.length > 0 ? `${topOffset}%` : "4px",

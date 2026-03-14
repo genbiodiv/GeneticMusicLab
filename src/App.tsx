@@ -46,10 +46,11 @@ import { motion, AnimatePresence } from "motion/react";
 export default function App() {
   const [currentGenome, setCurrentGenome] = useState<MusicalGenome | null>(null);
   const [evolutionParent, setEvolutionParent] = useState<MusicalGenome | null>(null);
-  const [offspring, setOffspring] = useState<[MusicalGenome, MusicalGenome, MusicalGenome] | null>(null);
+  const [offspring, setOffspring] = useState<MusicalGenome[] | null>(null);
   const [initialOptions, setInitialOptions] = useState<MusicalGenome[] | null>(null);
   const [lineage, setLineage] = useState<MusicalGenome[]>([]);
   const [mutationRate, setMutationRate] = useState(0.3);
+  const [numDescendants, setNumDescendants] = useState(3);
   const [intensity, setIntensity] = useState<"conservative" | "radical">("conservative");
   const [mutationFilters, setMutationFilters] = useState<MutationFilters>({
     drums: true,
@@ -60,7 +61,7 @@ export default function App() {
   const [zoom, setZoom] = useState(1);
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const [lang, setLang] = useState<"en" | "es">("es");
   const [theme, setTheme] = useState<"dark" | "light">("light");
   const [showInstructions, setShowInstructions] = useState(false);
@@ -70,7 +71,7 @@ export default function App() {
 
   const t = translations[lang];
 
-  const { play, stop, isPlaying, isLoaded, currentTime } = usePlaybackEngine();
+  const { play, pause, stop, resume, status, isPlaying, isLoaded, currentTime } = usePlaybackEngine();
 
   // Audio context resume on first interaction for mobile
   useEffect(() => {
@@ -193,13 +194,12 @@ export default function App() {
     if (!parent) return;
     setIsGenerating(true);
     try {
-      // Generate three descendants in parallel with different strategies
-      const [childA, childB, childC] = await Promise.all([
-        mutateGenome(parent, mutationRate, intensity, mutationFilters, { pitchGate, variantType: 1 }),
-        mutateGenome(parent, mutationRate, intensity, mutationFilters, { pitchGate, variantType: 2 }),
-        mutateGenome(parent, mutationRate, intensity, mutationFilters, { pitchGate, variantType: 3 })
-      ]);
-      setOffspring([childA, childB, childC]);
+      // Generate descendants based on user choice
+      const mutationPromises = Array.from({ length: numDescendants }).map(() => 
+        mutateGenome(parent, mutationRate, intensity, mutationFilters, { pitchGate })
+      );
+      const children = await Promise.all(mutationPromises);
+      setOffspring(children);
     } catch (error) {
       console.error("Failed to mutate genome", error);
     } finally {
@@ -254,6 +254,7 @@ export default function App() {
     setCurrentGenome(living);
     setEvolutionParent(living);
     setOffspring(null);
+    stop();
 
     // Streamline: automatically trigger next generation from the survivor
     handleMutate(living);
@@ -263,20 +264,30 @@ export default function App() {
     if (!offspring) return;
     setIsGenerating(true);
     try {
-      // Get the two survivors
+      // Get the survivors
       const survivors = offspring.filter((_, i) => i !== deadIndex);
-      if (survivors.length < 2) return;
+      if (survivors.length < 1) {
+        setOffspring(null);
+        return;
+      }
 
-      // Recombine the two survivors
-      const parent = await recombineGenomes(survivors[0], survivors[1]);
+      // If only one survivor, it becomes the parent
+      // If multiple, recombine the first two
+      let parent: MusicalGenome;
+      if (survivors.length >= 2) {
+        parent = await recombineGenomes(survivors[0], survivors[1]);
+      } else {
+        parent = survivors[0];
+      }
       
-      // Save the recombination to lineage
+      // Save to lineage
       setLineage([...lineage, parent]);
       setCurrentGenome(parent);
       setEvolutionParent(parent);
       setOffspring(null);
+      stop();
 
-      // Trigger next generation from the recombination
+      // Trigger next generation
       handleMutate(parent);
     } catch (error) {
       console.error("Failed to recombine genomes", error);
@@ -401,19 +412,30 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (status === "playing") pause();
+                else if (status === "paused") resume();
+                else if (currentGenome) play(currentGenome);
+              }}
+              disabled={!isLoaded || !currentGenome}
+              title={status === "playing" ? t.pauseDesc : t.playDesc}
+              className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
+                !isLoaded ? "opacity-50 cursor-not-allowed bg-zinc-600" :
+                status === "playing" ? "bg-amber-500 text-white" : "bg-emerald-600 text-white"
+              }`}
+            >
+              {!isLoaded ? <RefreshCw className="animate-spin" size={18} /> :
+               status === "playing" ? <div className="flex gap-1"><div className="w-1.5 h-4 bg-white rounded-full"/><div className="w-1.5 h-4 bg-white rounded-full"/></div> : <Play size={18} fill="currentColor" className="ml-1" />}
+            </button>
             {currentGenome && (
               <button
-                onClick={() => isPlaying ? stop() : play(currentGenome)}
+                onClick={stop}
                 disabled={!isLoaded}
-                title={isPlaying ? t.stopDesc : t.playDesc}
-                aria-label={isPlaying ? "Stop music" : "Play music"}
-                className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
-                  !isLoaded ? "opacity-50 cursor-not-allowed bg-zinc-600" :
-                  isPlaying ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
-                }`}
+                title={t.stopDesc}
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all bg-red-600 text-white hover:bg-red-500"
               >
-                {!isLoaded ? <RefreshCw className="animate-spin" size={18} /> :
-                 isPlaying ? <Square size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
+                <Square size={18} fill="currentColor" />
               </button>
             )}
           </div>
@@ -437,6 +459,23 @@ export default function App() {
                 </div>
                 
                 <div className="space-y-3 md:space-y-4">
+                  <div>
+                    <label htmlFor="descendant-count" className="flex justify-between text-[9px] md:text-[10px] text-zinc-500 mb-1 md:mb-2 font-mono font-bold">
+                      <span>{t.descendantCount}</span>
+                      <span>{numDescendants}</span>
+                    </label>
+                    <input
+                      id="descendant-count"
+                      type="range"
+                      min="2"
+                      max="10"
+                      step="1"
+                      value={numDescendants}
+                      onChange={(e) => setNumDescendants(parseInt(e.target.value))}
+                      className="w-full accent-emerald-600 h-1.5 md:h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+
                   <div>
                     <label htmlFor="mutation-rate" className="flex justify-between text-[9px] md:text-[10px] text-zinc-500 mb-1 md:mb-2 font-mono font-bold">
                       <span>{t.mutationRate}</span>
@@ -540,40 +579,6 @@ export default function App() {
                     {t.evolve}
                   </button>
                   <p className="text-[8px] text-zinc-400 text-center">{t.evolveDesc}</p>
-                </div>
-              </section>
-
-              <section 
-                className={`rounded-2xl border p-5 space-y-4 ${
-                  theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-sm"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <LayersIcon size={14} />
-                    <h2 className="text-[10px] font-mono uppercase tracking-widest font-bold">{t.changeInstrument}</h2>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {currentGenome.layers.map(layer => (
-                    <div key={layer.layerId} className="space-y-1">
-                      <label className="text-[8px] text-zinc-500 uppercase font-bold">{layer.role}</label>
-                      <select
-                        value={layer.events[0]?.sampleId || ""}
-                        onChange={(e) => handleInstrumentChange(layer.layerId, e.target.value)}
-                        title={t.changeInstrument}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[9px] font-mono outline-none focus:border-emerald-500"
-                      >
-                        {SAMPLE_LIBRARY.filter(s => {
-                          if (layer.role === 'drums') return s.role === 'percussion';
-                          if (layer.role === 'bass') return s.role === 'bass';
-                          return s.role === 'melody' || s.role === 'pad';
-                        }).map(sample => (
-                          <option key={sample.id} value={sample.id}>{sample.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
                 </div>
               </section>
             </>
@@ -702,7 +707,7 @@ export default function App() {
                 <p className="text-zinc-500 text-sm max-w-2xl mx-auto">{t.selectionDesc}</p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 {offspring.map((child, idx) => (
                   <motion.div
                     key={child.genomeId}
@@ -715,24 +720,32 @@ export default function App() {
                     <div className="flex justify-between items-center">
                       <div className="space-y-1">
                         <span className="px-3 py-1 bg-emerald-600/10 text-emerald-600 rounded-full text-[10px] font-mono font-bold uppercase">
-                          Candidate {idx === 0 ? 'A' : idx === 1 ? 'B' : 'C'}
+                          {t.option} {idx + 1}
                         </span>
                         <p className="text-[8px] font-mono text-zinc-500 uppercase">
-                          {idx === 0 ? t.variant1 : idx === 1 ? t.variant2 : t.variant3}
+                          {t.variantDesc}
                         </p>
                       </div>
-                      <button
-                        onClick={() => play(child)}
-                        className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 transition-all"
-                      >
-                        <Play size={16} fill="currentColor" className="ml-0.5" />
-                      </button>
-                    </div>
-
-                    <div className={`h-32 overflow-hidden rounded-xl border transition-colors duration-300 ${
-                      theme === "dark" ? "bg-black/20 border-white/5" : "bg-zinc-100 border-zinc-200"
-                    }`}>
-                      <GenomeTimeline genome={child} currentTime={-1} theme={theme} />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            if (status === "playing") pause();
+                            else if (status === "paused") resume();
+                            else play(child);
+                          }}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                            status === "playing" ? "bg-amber-500 text-white" : "bg-emerald-600 text-white"
+                          }`}
+                        >
+                          {status === "playing" ? <div className="flex gap-1"><div className="w-1 h-3 bg-white rounded-full"/><div className="w-1 h-3 bg-white rounded-full"/></div> : <Play size={16} fill="currentColor" className="ml-0.5" />}
+                        </button>
+                        <button
+                          onClick={stop}
+                          className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-500 transition-all"
+                        >
+                          <Square size={16} fill="currentColor" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -816,14 +829,14 @@ export default function App() {
                       {t.viewPath}
                     </button>
                     <button 
-                      onClick={() => setShowHistory(!showHistory)}
-                      aria-expanded={showHistory}
-                      title={t.historyDesc}
+                      onClick={() => setShowAnalysis(!showAnalysis)}
+                      aria-expanded={showAnalysis}
+                      title={t.mutationAnalysis}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-mono border transition-all font-bold focus:ring-2 focus:ring-emerald-500 outline-none ${
-                        showHistory ? "bg-emerald-600 text-white border-emerald-600" : "bg-white/5 border-white/10 text-zinc-500"
+                        showAnalysis ? "bg-emerald-600 text-white border-emerald-600" : "bg-white/5 border-white/10 text-zinc-500"
                       }`}
                     >
-                      {t.mutationLog.toUpperCase()}
+                      {t.mutationAnalysis.toUpperCase()}
                     </button>
                   </div>
                 </div>
@@ -836,6 +849,8 @@ export default function App() {
                     zoom={zoom}
                     onZoomChange={setZoom}
                     onEventMove={handleEventMove}
+                    lineage={lineage}
+                    analysisMode={showAnalysis}
                     labels={{
                       zoomIn: t.zoomInDesc,
                       zoomOut: t.zoomOutDesc,
@@ -846,9 +861,9 @@ export default function App() {
                 </div>
               </section>
 
-              {/* Mutation Log / Info */}
+              {/* Mutation Analysis Legend */}
               <AnimatePresence>
-                {showHistory && (
+                {showAnalysis && (
                   <motion.section
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -856,26 +871,25 @@ export default function App() {
                     className={`rounded-2xl border p-6 space-y-4 ${
                       theme === "dark" ? "bg-zinc-900/50 border-white/10" : "bg-white border-black shadow-sm"
                     }`}
-                    aria-labelledby="drift-log-title"
+                    aria-labelledby="analysis-legend-title"
                   >
                     <div className="flex items-center gap-2 text-emerald-600">
-                      <History size={16} aria-hidden="true" />
-                      <h3 id="drift-log-title" className="text-xs font-mono uppercase tracking-widest font-bold">{t.geneticDrift}</h3>
+                      <Activity size={16} aria-hidden="true" />
+                      <h3 id="analysis-legend-title" className="text-xs font-mono uppercase tracking-widest font-bold">{t.mutationAnalysis}</h3>
                     </div>
-                    <div className="space-y-3">
-                      {(currentGenome.mutationHistory || []).map((mut, i) => (
-                        <div key={i} className={`flex gap-4 items-start p-3 rounded-xl border ${
-                          theme === "dark" ? "bg-black/20 border-white/10" : "bg-zinc-50 border-black"
-                        }`}>
-                          <div className="mt-1 px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[8px] font-mono font-bold border border-emerald-700">
-                            {mut.type}
-                          </div>
-                          <div>
-                            <p className={`text-xs font-medium ${theme === "dark" ? "text-zinc-300" : "text-zinc-900"}`}>{mut.description}</p>
-                            <p className="text-[10px] text-zinc-600 mt-1 font-mono uppercase font-bold">Target: {mut.target}</p>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded bg-green-500/40 border border-green-500" />
+                        <span className="text-xs font-medium">{t.conserved}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded bg-yellow-500/40 border border-yellow-500" />
+                        <span className="text-xs font-medium">{t.shared}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded bg-red-500/40 border border-red-500" />
+                        <span className="text-xs font-medium">{t.unique}</span>
+                      </div>
                     </div>
                   </motion.section>
                 )}
