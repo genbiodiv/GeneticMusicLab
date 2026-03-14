@@ -81,6 +81,10 @@ export function usePlaybackEngine() {
     try {
       await Tone.start();
       
+      // Force unlock on mobile
+      const osc = new Tone.Oscillator().toDestination();
+      osc.start().stop("+0.01");
+      
       // Ensure context is running
       if (Tone.context.state !== "running") {
         await Tone.context.resume();

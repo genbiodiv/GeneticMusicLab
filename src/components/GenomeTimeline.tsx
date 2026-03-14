@@ -64,6 +64,56 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
     return "unique";
   };
 
+  const getSegmentStatus = (layerId: string, sampleId: string, time: number, targetGenome: MusicalGenome) => {
+    const ancestors = lineage.filter(g => g.genomeId !== targetGenome.genomeId);
+    if (ancestors.length === 0) return "conserved";
+
+    let matchCount = 0;
+    ancestors.forEach(ancestor => {
+      const ancestorLayer = ancestor.layers.find(l => l.layerId === layerId);
+      if (ancestorLayer) {
+        const isPlaying = ancestorLayer.events.some(e => 
+          e.sampleId === sampleId && 
+          time >= e.start && 
+          time < (e.start + e.duration)
+        );
+        if (isPlaying) matchCount++;
+      }
+    });
+
+    if (matchCount === ancestors.length) return "conserved";
+    if (matchCount > 0) return "shared";
+    return "unique";
+  };
+
+  const getStatusColorValue = (status: string) => {
+    switch (status) {
+      case "conserved": return theme === "dark" ? "#22c55e66" : "#4ade80"; // green-500/40 or green-400
+      case "shared": return theme === "dark" ? "#eab30866" : "#facc15"; // yellow-500/40 or yellow-400
+      case "unique": return theme === "dark" ? "#ef444466" : "#f87171"; // red-500/40 or red-400
+      default: return theme === "dark" ? "#10b9814d" : "#34d399"; // emerald-500/30 or emerald-400
+    }
+  };
+
+  const getAnalysisGradient = (layerId: string, event: any, targetGenome: MusicalGenome) => {
+    if (!analysisMode || lineage.length === 0) return null;
+    
+    const segmentDuration = 0.1;
+    const segments = Math.max(1, Math.ceil(event.duration / segmentDuration));
+    const stops: string[] = [];
+    
+    for (let i = 0; i < segments; i++) {
+      const t = event.start + i * segmentDuration + segmentDuration / 2;
+      const status = getSegmentStatus(layerId, event.sampleId, t, targetGenome);
+      const color = getStatusColorValue(status);
+      const startPercent = (i / segments) * 100;
+      const endPercent = ((i + 1) / segments) * 100;
+      stops.push(`${color} ${startPercent}%`, `${color} ${endPercent}%`);
+    }
+    
+    return `linear-gradient(to right, ${stops.join(", ")})`;
+  };
+
   const getEventColor = (status: string | null, isGhost: boolean = false) => {
     if (!status) {
       if (isGhost) return ""; // Use default ghost color logic
@@ -217,22 +267,19 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
                 return (
                   <React.Fragment key={ghost.genomeId}>
                     {(ghostLayer.events || []).map(event => {
-                      const status = getConservationStatus(layer.layerId, event, ghost);
-                      const analysisColor = getEventColor(status, true);
+                      const gradient = getAnalysisGradient(layer.layerId, event, ghost);
                       
                       return (
                         <div
                           key={`${ghost.genomeId}-${event.eventId}`}
-                          className={`absolute border rounded-sm opacity-40 pointer-events-none z-0 ${analysisColor}`}
+                          className="absolute border rounded-sm opacity-40 pointer-events-none z-0"
                           style={{
                             top: `${topOffset}%`,
                             height: `${trackHeightPercent * 0.8}%`,
                             left: `${event.start * pixelsPerSecond}px`,
                             width: `${event.duration * pixelsPerSecond}px`,
-                            ...(!analysisColor && {
-                              backgroundColor: `hsl(${(gIdx * 60) % 360}, 70%, 50%)`,
-                              borderColor: `hsl(${(gIdx * 60) % 360}, 70%, 40%)`
-                            })
+                            background: gradient || `hsl(${(gIdx * 60) % 360}, 70%, 50%)`,
+                            borderColor: gradient ? "transparent" : `hsl(${(gIdx * 60) % 360}, 70%, 40%)`
                           }}
                         />
                       );
@@ -246,13 +293,14 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
                 const totalTracks = overlayGenomes.length + 1;
                 const trackHeightPercent = 100 / totalTracks;
                 const topOffset = overlayGenomes.length * trackHeightPercent;
+                const gradient = getAnalysisGradient(layer.layerId, event, genome);
 
                 return (
                   <motion.div
                     key={event.eventId}
                     onMouseDown={(e) => handleMouseDown(e, layer.layerId, event.eventId, event.start)}
                     className={`absolute border rounded-sm flex items-center justify-center overflow-hidden transition-colors duration-300 z-10 cursor-grab active:cursor-grabbing ${
-                      getEventColor(getConservationStatus(layer.layerId, event))
+                      !gradient ? getEventColor(null) : ""
                     }`}
                     style={{
                       top: overlayGenomes.length > 0 ? `${topOffset}%` : "4px",
@@ -260,6 +308,8 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
                       height: overlayGenomes.length > 0 ? `${trackHeightPercent}%` : "auto",
                       left: `${event.start * pixelsPerSecond}px`,
                       width: `${event.duration * pixelsPerSecond}px`,
+                      background: gradient || undefined,
+                      borderColor: gradient ? "rgba(255,255,255,0.1)" : undefined
                     }}
                     whileHover={{ scale: 1.05, backgroundColor: theme === "dark" ? "rgba(16, 185, 129, 0.5)" : "rgba(16, 185, 129, 0.8)" }}
                   >

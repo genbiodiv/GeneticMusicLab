@@ -10,6 +10,7 @@ import { generateInitialGenome, mutateGenome, recombineGenomes } from "./service
 import { usePlaybackEngine } from "./hooks/usePlaybackEngine";
 import { GenomeTimeline } from "./components/GenomeTimeline";
 import { LineageTree } from "./components/LineageTree";
+import { LabLogo } from "./components/LabLogo";
 import { translations } from "./translations";
 import { DEFAULT_GENOME, SAMPLE_LIBRARY } from "./constants";
 import { 
@@ -83,9 +84,13 @@ export default function App() {
     };
     window.addEventListener("click", resumeAudio, { once: true });
     window.addEventListener("touchstart", resumeAudio, { once: true });
+    window.addEventListener("mousedown", resumeAudio, { once: true });
+    window.addEventListener("pointerdown", resumeAudio, { once: true });
     return () => {
       window.removeEventListener("click", resumeAudio);
       window.removeEventListener("touchstart", resumeAudio);
+      window.removeEventListener("mousedown", resumeAudio);
+      window.removeEventListener("pointerdown", resumeAudio);
     };
   }, []);
 
@@ -157,16 +162,35 @@ export default function App() {
       }
     };
     
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkAudio();
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     const interval = setInterval(checkAudio, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
   }, []);
 
   const resumeAudio = async () => {
-    await Tone.start();
-    if (Tone.context.state !== "running") {
-      await Tone.context.resume();
+    try {
+      await Tone.start();
+      // Create a tiny silent buffer and play it to force unlock on some mobile browsers
+      const oscillator = new Tone.Oscillator().toDestination();
+      oscillator.start().stop("+0.01");
+      
+      if (Tone.context.state !== "running") {
+        await Tone.context.resume();
+      }
+      setIsAudioSuspended(false);
+      console.log("Audio context resumed successfully");
+    } catch (e) {
+      console.error("Failed to resume audio context", e);
     }
-    setIsAudioSuspended(false);
   };
 
   const handleInitialGenerate = async () => {
@@ -328,9 +352,7 @@ export default function App() {
         }`}
       >
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)]" aria-hidden="true">
-            <Dna className="text-white" size={20} />
-          </div>
+          <LabLogo size={40} theme={theme} />
           <div>
             <h1 className="text-lg md:text-xl font-bold tracking-tight">{t.title}</h1>
             <p className={`text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-mono font-bold ${
@@ -648,8 +670,7 @@ export default function App() {
           ) : lineage.length === 0 ? (
             <section className="h-[70vh] flex flex-col items-center justify-center text-center space-y-8" aria-labelledby="welcome-title">
               <div className="relative" aria-hidden="true">
-                <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full" />
-                <Dna size={100} className="text-emerald-600 relative animate-pulse" />
+                <LabLogo size={120} theme={theme} />
               </div>
               <div className="max-w-xl space-y-4">
                 <h2 id="welcome-title" className="text-3xl font-bold tracking-tight">{t.welcome}</h2>
@@ -1004,8 +1025,8 @@ export default function App() {
             <h2 className="text-2xl font-bold text-white">{lang === 'en' ? 'Audio is Muted' : 'Audio Silenciado'}</h2>
             <p className="text-zinc-400 text-sm max-w-xs">
               {lang === 'en' 
-                ? 'Browsers require a user gesture to enable audio. Click below to start the engine.' 
-                : 'Los navegadores requieren un gesto del usuario para activar el audio. Haz clic abajo para iniciar.'}
+                ? 'Browsers require a user gesture to enable audio. Click below to start the engine. Also, ensure your hardware silent switch is OFF.' 
+                : 'Los navegadores requieren un gesto del usuario para activar el audio. Haz clic abajo para iniciar. Asegúrate también de que el interruptor de silencio físico esté DESACTIVADO.'}
             </p>
           </div>
           <button
