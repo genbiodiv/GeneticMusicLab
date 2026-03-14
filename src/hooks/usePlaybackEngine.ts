@@ -75,6 +75,30 @@ export function usePlaybackEngine() {
     setStatus("playing");
   };
 
+  const unlock = async () => {
+    try {
+      await Tone.start();
+      await Tone.context.resume();
+      
+      // "Warm up" all synths with a tiny silent note to force hardware allocation
+      synthsRef.current.forEach(synth => {
+        if (synth.triggerAttackRelease) {
+          try {
+            synth.triggerAttackRelease("C4", "0.001n", Tone.now(), 0);
+          } catch (e) {
+            // Ignore errors for individual synths
+          }
+        }
+      });
+      
+      console.log("Audio engine unlocked and warmed up");
+      return true;
+    } catch (error) {
+      console.error("Failed to unlock audio engine", error);
+      return false;
+    }
+  };
+
   const play = async (genome: MusicalGenome) => {
     if (!isLoaded) return;
     
@@ -136,5 +160,5 @@ export function usePlaybackEngine() {
     }
   };
 
-  return { play, pause, stop, resume, status, isPlaying: status === "playing", isLoaded, currentTime };
+  return { play, pause, stop, resume, unlock, status, isPlaying: status === "playing", isLoaded, currentTime };
 }

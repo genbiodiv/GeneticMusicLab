@@ -72,27 +72,24 @@ export default function App() {
 
   const t = translations[lang];
 
-  const { play, pause, stop, resume, status, isPlaying, isLoaded, currentTime } = usePlaybackEngine();
+  const { play, pause, stop, resume, unlock, status, isPlaying, isLoaded, currentTime } = usePlaybackEngine();
 
   // Audio context resume on first interaction for mobile
   useEffect(() => {
-    const resumeAudio = async () => {
-      if (Tone.context.state !== "running") {
-        await Tone.start();
-        await Tone.context.resume();
-      }
+    const resumeAudioContext = async () => {
+      await unlock();
     };
-    window.addEventListener("click", resumeAudio, { once: true });
-    window.addEventListener("touchstart", resumeAudio, { once: true });
-    window.addEventListener("mousedown", resumeAudio, { once: true });
-    window.addEventListener("pointerdown", resumeAudio, { once: true });
+    window.addEventListener("click", resumeAudioContext, { once: true });
+    window.addEventListener("touchstart", resumeAudioContext, { once: true });
+    window.addEventListener("mousedown", resumeAudioContext, { once: true });
+    window.addEventListener("pointerdown", resumeAudioContext, { once: true });
     return () => {
-      window.removeEventListener("click", resumeAudio);
-      window.removeEventListener("touchstart", resumeAudio);
-      window.removeEventListener("mousedown", resumeAudio);
-      window.removeEventListener("pointerdown", resumeAudio);
+      window.removeEventListener("click", resumeAudioContext);
+      window.removeEventListener("touchstart", resumeAudioContext);
+      window.removeEventListener("mousedown", resumeAudioContext);
+      window.removeEventListener("pointerdown", resumeAudioContext);
     };
-  }, []);
+  }, [unlock]);
 
   const getAncestryPath = () => {
     if (!currentGenome) return [];
@@ -177,19 +174,9 @@ export default function App() {
   }, []);
 
   const resumeAudio = async () => {
-    try {
-      await Tone.start();
-      // Create a tiny silent buffer and play it to force unlock on some mobile browsers
-      const oscillator = new Tone.Oscillator().toDestination();
-      oscillator.start().stop("+0.01");
-      
-      if (Tone.context.state !== "running") {
-        await Tone.context.resume();
-      }
+    const success = await unlock();
+    if (success) {
       setIsAudioSuspended(false);
-      console.log("Audio context resumed successfully");
-    } catch (e) {
-      console.error("Failed to resume audio context", e);
     }
   };
 
