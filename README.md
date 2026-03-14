@@ -1,20 +1,57 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Genetic Music Lab - Evolutionary Composition Engine
 
-# Run and deploy your AI Studio app
+## Propósito
+El **Genetic Music Lab** es un entorno experimental de composición musical basado en principios de biología evolutiva. El objetivo es permitir que los usuarios "cultiven" música, tratando las composiciones como genomas que pueden mutar, heredarse y evolucionar a lo largo de múltiples generaciones.
 
-This contains everything you need to run your app locally.
+## Conceptos Fundamentales
 
-View your app in AI Studio: https://ai.studio/apps/718ed3ce-d217-4c38-b0ce-124886ef628d
+### 1. El Genoma Musical
+Cada pieza musical se define por un genoma (`MusicalGenome`) que contiene:
+- **Loci Genéticos (Layers/Tracks)**: Capas de instrumentos (Drums, Bass, Melody).
+- **Genes (Events)**: Eventos musicales individuales con propiedades de tiempo, duración, muestra (sample) y tono.
+- **Reglas Regulatorias**: Parámetros que afectan la expresión del genoma (volumen, pitch global).
+- **Linaje**: Un registro de su ascendencia y las mutaciones que lo formaron.
 
-## Run Locally
+### 2. Dinámica Evolutiva
+- **Mutación**: Cambios aleatorios en los genes.
+  - **Conservadora**: Pequeños ajustes en el tiempo o tono.
+  - **Radical**: Cambios estructurales, duplicaciones o re-aleatorización completa.
+- **Selección Natural (Cámara de Selección)**: El usuario actúa como la presión selectiva, decidiendo qué descendientes sobreviven ("Live") y cuáles son descartados ("Die").
+- **Hibridación (Recombinación)**: Cuando un descendiente es descartado, sus genes pueden recombinarse con los supervivientes para formar una nueva generación híbrida.
 
-**Prerequisites:**  Node.js
+### 3. Análisis de Mutaciones
+Una herramienta visual que permite identificar la estabilidad genética:
+- **Verde (Conservado)**: Genes presentes en toda la línea ancestral.
+- **Amarillo (Compartido)**: Genes que han persistido en algunas generaciones.
+- **Rojo (Único)**: Mutaciones nuevas que no existen en los ancestros.
 
+## Elementos Técnicos
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Stack Tecnológico
+- **Frontend**: React 18+ con TypeScript.
+- **Audio Engine**: [Tone.js](https://tonejs.github.io/) para síntesis en tiempo real y secuenciación precisa.
+- **Animaciones**: [Framer Motion](https://www.framer.com/motion/) para transiciones fluidas y feedback visual.
+- **Estilos**: Tailwind CSS con un diseño minimalista y bilingüe.
+- **Iconografía**: Lucide React.
+
+### Estructura de Archivos Principal
+- `/src/App.tsx`: Orquestador principal del estado y la UI.
+- `/src/services/evolutionService.ts`: El "motor biológico" que maneja la generación, mutación y recombinación de genomas.
+- `/src/hooks/usePlaybackEngine.ts`: Puente entre el genoma musical y el motor de audio de Tone.js.
+- `/src/components/GenomeTimeline.tsx`: Visualización interactiva del fenotipo musical (el mapa de genes).
+- `/src/translations.ts`: Sistema de internacionalización (EN/ES).
+
+### Configuraciones Específicas
+- **Prevención de Ruidos**: El sistema incluye una lógica de resolución de solapamientos (`resolveOverlaps`) que asegura que dos eventos del mismo instrumento no suenen simultáneamente, evitando saturación y ruidos digitales.
+- **Compatibilidad Móvil**: Implementa un sistema de desbloqueo de audio mediante gestos del usuario para cumplir con las políticas de reproducción de navegadores móviles.
+- **Modo de Análisis**: Capacidad de superponer hasta 5 generaciones simultáneamente para observar la deriva genética visualmente.
+
+## Cómo Jugar
+1. **Inicializar**: Elige un ancestro raíz para comenzar tu linaje.
+2. **Evolucionar**: Ajusta la tasa de mutación y el enfoque (Drums, Bass, Melody) y haz clic en "Evolve".
+3. **Seleccionar**: En la Cámara de Selección, escucha a los descendientes y decide quién vive.
+4. **Analizar**: Usa el botón de "Análisis de Mutaciones" para ver qué partes de tu música son ancestrales y cuáles son innovaciones recientes.
+5. **Aprender**: Completa los desafíos de aprendizaje incluidos en el manual de instrucciones.
+
+---
+*Experimental Bio-Acoustic Research Project &copy; 2026*

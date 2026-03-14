@@ -39,11 +39,11 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   const pixelsPerSecond = basePixelsPerSecond * (zoom ?? 1);
 
   // Helper to determine conservation status of an event
-  const getConservationStatus = (layerId: string, event: any) => {
+  const getConservationStatus = (layerId: string, event: any, targetGenome: MusicalGenome = genome) => {
     if (!analysisMode || lineage.length === 0) return null;
 
-    // Ancestors are all lineage members except the current one
-    const ancestors = lineage.filter(g => g.genomeId !== genome.genomeId);
+    // Ancestors are all lineage members except the target one
+    const ancestors = lineage.filter(g => g.genomeId !== targetGenome.genomeId);
     if (ancestors.length === 0) return "conserved"; // Root is conserved by default
 
     let matchCount = 0;
@@ -64,8 +64,11 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
     return "unique";
   };
 
-  const getEventColor = (status: string | null) => {
-    if (!status) return theme === "dark" ? "bg-emerald-500/30 border-emerald-500/50" : "bg-emerald-400 border-emerald-600";
+  const getEventColor = (status: string | null, isGhost: boolean = false) => {
+    if (!status) {
+      if (isGhost) return ""; // Use default ghost color logic
+      return theme === "dark" ? "bg-emerald-500/30 border-emerald-500/50" : "bg-emerald-400 border-emerald-600";
+    }
     
     switch (status) {
       case "conserved":
@@ -213,20 +216,27 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
 
                 return (
                   <React.Fragment key={ghost.genomeId}>
-                    {(ghostLayer.events || []).map(event => (
-                      <div
-                        key={`${ghost.genomeId}-${event.eventId}`}
-                        className="absolute border rounded-sm opacity-40 pointer-events-none z-0"
-                        style={{
-                          top: `${topOffset}%`,
-                          height: `${trackHeightPercent * 0.8}%`,
-                          left: `${event.start * pixelsPerSecond}px`,
-                          width: `${event.duration * pixelsPerSecond}px`,
-                          backgroundColor: `hsl(${(gIdx * 60) % 360}, 70%, 50%)`,
-                          borderColor: `hsl(${(gIdx * 60) % 360}, 70%, 40%)`
-                        }}
-                      />
-                    ))}
+                    {(ghostLayer.events || []).map(event => {
+                      const status = getConservationStatus(layer.layerId, event, ghost);
+                      const analysisColor = getEventColor(status, true);
+                      
+                      return (
+                        <div
+                          key={`${ghost.genomeId}-${event.eventId}`}
+                          className={`absolute border rounded-sm opacity-40 pointer-events-none z-0 ${analysisColor}`}
+                          style={{
+                            top: `${topOffset}%`,
+                            height: `${trackHeightPercent * 0.8}%`,
+                            left: `${event.start * pixelsPerSecond}px`,
+                            width: `${event.duration * pixelsPerSecond}px`,
+                            ...(!analysisColor && {
+                              backgroundColor: `hsl(${(gIdx * 60) % 360}, 70%, 50%)`,
+                              borderColor: `hsl(${(gIdx * 60) % 360}, 70%, 40%)`
+                            })
+                          }}
+                        />
+                      );
+                    })}
                   </React.Fragment>
                 );
               })}

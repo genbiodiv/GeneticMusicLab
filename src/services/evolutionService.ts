@@ -238,7 +238,44 @@ export async function mutateGenome(
   const variantNames = ["", "variant1", "variant2", "variant3"];
   newGenome.summary = `Generation ${newGenome.generation} - ${variantNames[variantType]}`;
   
+  // Resolve overlaps to avoid noise
+  newGenome.layers.forEach(layer => {
+    layer.events = resolveOverlaps(layer.events);
+  });
+  
   return newGenome;
+}
+
+function resolveOverlaps(events: any[]): any[] {
+  if (events.length <= 1) return events;
+  
+  // Sort by start time
+  const sorted = [...events].sort((a, b) => a.start - b.start);
+  const resolved: any[] = [];
+  
+  sorted.forEach((event, i) => {
+    if (i === 0) {
+      resolved.push(event);
+      return;
+    }
+    
+    const last = resolved[resolved.length - 1];
+    const overlap = last.start + last.duration - event.start;
+    
+    if (overlap > 0) {
+      // If they overlap, shorten the previous one
+      last.duration = Math.max(0.05, last.duration - overlap);
+      
+      // If even after shortening they still overlap (meaning event starts before last starts, which shouldn't happen with sort)
+      // or if shortening makes it too small, we might need to shift the current one
+      if (last.start + last.duration > event.start) {
+        event.start = last.start + last.duration;
+      }
+    }
+    resolved.push(event);
+  });
+  
+  return resolved;
 }
 
 export async function recombineGenomes(
@@ -271,7 +308,8 @@ export async function recombineGenomes(
       eventId: `e_${Math.random().toString(36).substring(2, 11)}`
     }));
     
-    return { ...layer, events: JSON.parse(JSON.stringify(mixedEvents)) };
+    // Resolve overlaps
+    return { ...layer, events: resolveOverlaps(mixedEvents) };
   });
 
   return newGenome;
