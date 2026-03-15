@@ -9,9 +9,13 @@ interface LineageTreeProps {
   onSelect: (genome: MusicalGenome) => void;
   title: string;
   theme?: "dark" | "light";
+  intensity?: "conservative" | "radical";
 }
 
-export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenomeId, onSelect, title, theme = "dark" }) => {
+export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenomeId, onSelect, title, theme = "dark", intensity = "conservative" }) => {
+  const isRadical = intensity === "radical";
+  const accent = isRadical ? "blue" : "emerald";
+
   return (
     <nav className="space-y-2" aria-label={title}>
       <div className={`flex items-center gap-2 mb-4 transition-colors duration-300 ${
@@ -32,9 +36,9 @@ export const LineageTree: React.FC<LineageTreeProps> = ({ lineage, currentGenome
                 onClick={() => onSelect(g)}
                 aria-current={isActive ? "true" : undefined}
                 aria-label={`Generation ${g.generation}: ${g.summary}`}
-                className={`flex-1 text-left p-2 md:p-3 rounded-lg border transition-all focus:ring-4 focus:ring-emerald-500 outline-none ${
+                className={`flex-1 text-left p-2 md:p-3 rounded-lg border transition-all focus:ring-4 focus:ring-${accent}-500 outline-none ${
                   isActive
-                    ? "bg-emerald-600/10 border-emerald-600 text-emerald-600 font-bold"
+                    ? `bg-${accent}-600/10 border-${accent}-600 text-${accent}-600 font-bold`
                     : theme === "dark"
                       ? "bg-white/5 border-zinc-800 text-zinc-500 hover:bg-white/10"
                       : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"

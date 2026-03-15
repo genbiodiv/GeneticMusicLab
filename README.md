@@ -16,13 +16,13 @@ Cada pieza musical se define por un genoma (`MusicalGenome`) que contiene:
 - **Mutación**: Cambios aleatorios en los genes.
   - **Conservadora**: Pequeños ajustes en el tiempo o tono.
   - **Radical**: Cambios estructurales, duplicaciones o re-aleatorización completa.
-- **Selección Natural (Cámara de Selección)**: El usuario actúa como la presión selectiva, decidiendo qué descendientes sobreviven ("Live") y cuáles son descartados ("Die").
-- **Hibridación (Recombinación)**: Cuando un descendiente es descartado, sus genes pueden recombinarse con los supervivientes para formar una nueva generación híbrida.
+- **Selección Natural (Cámara de Selección)**: El usuario actúa como la presión selectiva, decidiendo explícitamente qué descendientes sobreviven ("Live") y cuáles son descartados ("Die") antes de avanzar a la siguiente generación.
+- **Hibridación (Recombinación)**: El usuario puede optar por activar la recombinación entre dos supervivientes aleatorios. Si se activa, se genera un híbrido que combina segmentos de ambos genomas parentales antes de aplicar nuevas mutaciones.
 
 ### 3. Análisis de Mutaciones
 Una herramienta visual que permite identificar la estabilidad genética:
 - **Verde (Conservado)**: Genes presentes en toda la línea ancestral.
-- **Amarillo (Compartido)**: Genes que han persistido en algunas generaciones.
+- **Amarillo (Compartido)**: Genes que han persistido en algunas generaciones o provienen de recombinación.
 - **Rojo (Único)**: Mutaciones nuevas que no existen en los ancestros.
 
 ## Elementos Técnicos
@@ -49,9 +49,11 @@ Una herramienta visual que permite identificar la estabilidad genética:
 ## Cómo Jugar
 1. **Inicializar**: Elige un ancestro raíz para comenzar tu linaje.
 2. **Evolucionar**: Ajusta la tasa de mutación y el enfoque (Drums, Bass, Melody) y haz clic en "Evolve".
-3. **Seleccionar**: En la Cámara de Selección, escucha a los descendientes y decide quién vive.
-4. **Analizar**: Usa el botón de "Análisis de Mutaciones" para ver qué partes de tu música son ancestrales y cuáles son innovaciones recientes.
-5. **Aprender**: Completa los desafíos de aprendizaje incluidos en el manual de instrucciones.
+3. **Seleccionar**: En la Cámara de Selección, marca cada descendiente como "Vivir" o "Morir".
+4. **Recombinar**: Decide si quieres activar la recombinación entre sobrevivientes antes de pulsar "Pasar a la Siguiente Generación".
+5. **Analizar**: Usa el botón de "Análisis de Mutaciones" para ver qué partes de tu música son ancestrales y cuáles son innovaciones recientes.
+6. **Aprender**: Completa los desafíos de aprendizaje incluidos en el manual de instrucciones.
 
 ---
 *Experimental Bio-Acoustic Research Project &copy; 2026*
+**Created by Rafik Neme**

@@ -13,6 +13,7 @@ interface GenomeTimelineProps {
   overlayGenomes?: MusicalGenome[];
   lineage?: MusicalGenome[];
   analysisMode?: boolean;
+  intensity?: "conservative" | "radical";
   labels?: {
     zoomIn: string;
     zoomOut: string;
@@ -30,6 +31,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   overlayGenomes = [],
   lineage = [],
   analysisMode = false,
+  intensity = "conservative",
   labels
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -86,12 +88,18 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
     return "unique";
   };
 
+  const isRadical = intensity === "radical";
+
   const getStatusColorValue = (status: string) => {
     switch (status) {
-      case "conserved": return theme === "dark" ? "#22c55e66" : "#4ade80"; // green-500/40 or green-400
+      case "conserved": 
+        if (isRadical) return theme === "dark" ? "#3b82f666" : "#60a5fa"; // blue-500/40 or blue-400
+        return theme === "dark" ? "#22c55e66" : "#4ade80"; // green-500/40 or green-400
       case "shared": return theme === "dark" ? "#eab30866" : "#facc15"; // yellow-500/40 or yellow-400
       case "unique": return theme === "dark" ? "#ef444466" : "#f87171"; // red-500/40 or red-400
-      default: return theme === "dark" ? "#10b9814d" : "#34d399"; // emerald-500/30 or emerald-400
+      default: 
+        if (isRadical) return theme === "dark" ? "#3b82f64d" : "#60a5fa"; // blue-500/30 or blue-400
+        return theme === "dark" ? "#10b9814d" : "#34d399"; // emerald-500/30 or emerald-400
     }
   };
 
@@ -115,20 +123,22 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   };
 
   const getEventColor = (status: string | null, isGhost: boolean = false) => {
+    const accent = isRadical ? "blue" : "emerald";
     if (!status) {
       if (isGhost) return ""; // Use default ghost color logic
-      return theme === "dark" ? "bg-emerald-500/30 border-emerald-500/50" : "bg-emerald-400 border-emerald-600";
+      return theme === "dark" ? `bg-${accent}-500/30 border-${accent}-500/50` : `bg-${accent}-400 border-${accent}-600`;
     }
     
     switch (status) {
       case "conserved":
+        if (isRadical) return theme === "dark" ? "bg-blue-500/40 border-blue-500" : "bg-blue-400 border-blue-600";
         return theme === "dark" ? "bg-green-500/40 border-green-500" : "bg-green-400 border-green-600";
       case "shared":
         return theme === "dark" ? "bg-yellow-500/40 border-yellow-500" : "bg-yellow-400 border-yellow-600";
       case "unique":
         return theme === "dark" ? "bg-red-500/40 border-red-500" : "bg-red-400 border-red-600";
       default:
-        return theme === "dark" ? "bg-emerald-500/30 border-emerald-500/50" : "bg-emerald-400 border-emerald-600";
+        return theme === "dark" ? `bg-${accent}-500/30 border-${accent}-500/50` : `bg-${accent}-400 border-${accent}-600`;
     }
   };
 
@@ -197,7 +207,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
               const currentZoom = zoom ?? 1;
               onZoomChange?.(Math.max(0.2, currentZoom - 0.2));
             }}
-            className="p-1 hover:text-emerald-500 transition-colors cursor-pointer"
+            className={`p-1 hover:text-${isRadical ? 'blue' : 'emerald'}-500 transition-colors cursor-pointer`}
             title={labels?.zoomOut || "Zoom Out"}
           >
             <ZoomOut size={14} />
@@ -211,7 +221,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
               const currentZoom = zoom ?? 1;
               onZoomChange?.(Math.min(4, currentZoom + 0.2));
             }}
-            className="p-1 hover:text-emerald-500 transition-colors cursor-pointer"
+            className={`p-1 hover:text-${isRadical ? 'blue' : 'emerald'}-500 transition-colors cursor-pointer`}
             title={labels?.zoomIn || "Zoom In"}
           >
             <ZoomIn size={14} />
@@ -222,7 +232,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
               e.stopPropagation();
               handleFitToScreen();
             }}
-            className="p-1 hover:text-emerald-500 transition-colors flex items-center gap-1 cursor-pointer"
+            className={`p-1 hover:text-${isRadical ? 'blue' : 'emerald'}-500 transition-colors flex items-center gap-1 cursor-pointer`}
             title={labels?.fit || "Fit to Screen"}
           >
             <Maximize2 size={14} />
@@ -234,7 +244,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
       <div className="relative" style={{ width: `${duration * pixelsPerSecond}px`, minHeight: "160px" }}>
         {/* Playhead */}
         <motion.div 
-          className="absolute top-0 bottom-0 w-0.5 bg-emerald-500 z-30"
+          className={`absolute top-0 bottom-0 w-0.5 bg-${isRadical ? 'blue' : 'emerald'}-500 z-30`}
           animate={{ left: `${currentTime * pixelsPerSecond}px` }}
           transition={{ type: "tween", ease: "linear", duration: 0.1 }}
         />
@@ -311,10 +321,14 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
                       background: gradient || undefined,
                       borderColor: gradient ? "rgba(255,255,255,0.1)" : undefined
                     }}
-                    whileHover={{ scale: 1.05, backgroundColor: theme === "dark" ? "rgba(16, 185, 129, 0.5)" : "rgba(16, 185, 129, 0.8)" }}
+                    whileHover={{ scale: 1.05, backgroundColor: theme === "dark" 
+                      ? (isRadical ? "rgba(59, 130, 246, 0.5)" : "rgba(16, 185, 129, 0.5)") 
+                      : (isRadical ? "rgba(59, 130, 246, 0.8)" : "rgba(16, 185, 129, 0.8)") }}
                   >
                     <span className={`text-[8px] font-mono truncate px-1 font-bold ${
-                      theme === "dark" ? "text-emerald-200" : "text-emerald-950"
+                      theme === "dark" 
+                        ? (isRadical ? "text-blue-200" : "text-emerald-200") 
+                        : (isRadical ? "text-blue-950" : "text-emerald-950")
                     } ${overlayGenomes.length > 2 ? 'hidden' : ''}`}>
                       {event.sampleId}
                     </span>

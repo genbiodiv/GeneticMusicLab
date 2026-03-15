@@ -9,8 +9,8 @@ export const translations = {
     evolve: "Evolve Genome",
     mutationParams: "Mutation Params",
     mutationRate: "Mutation Rate",
-    conservative: "Conservative",
-    radical: "Radical",
+    conservative: "Simple Mutation",
+    radical: "Structural Mutation",
     conservativeDesc: "Small, incremental changes. Like point mutations, it preserves the core structure while tweaking details.",
     radicalDesc: "Large, structural changes. Can duplicate, invert, or completely re-randomize sections of the genome.",
     mutationFocus: "Mutation Focus",
@@ -58,6 +58,10 @@ export const translations = {
     fitDesc: "Fit sequence to window width.",
     compare: "Align Paths",
     compareDesc: "Overlay up to 5 generations to observe changes.",
+    proceed: "Proceed to Next Generation",
+    recombineQuestion: "Recombine two random survivors?",
+    recombineDesc: "If enabled, a hybrid will be formed before mutation.",
+    credits: "Created by Rafik Neme",
     editMode: "Manual Edit",
     editModeDesc: "Click and drag blocks to shift their timing.",
     changeInstrument: "Change Instrument",
@@ -90,14 +94,16 @@ export const translations = {
     instructions: [
       "Root Initialization: Click 'Initialize Lab' to generate your first musical sequence. You can choose from 4 distinct 'Root Ancestors', each with a unique genetic profile (Tempo, Density, and Tone).",
       "Musical Phenotype (Timeline): The central visualization shows the 'genes' of your music. Each block represents a musical event. In Light Mode, these are clear and high-contrast. You can see the layers for Drums, Bass, and Melody.",
-      "Mutation Parameters: Use the left sidebar to influence evolution. 'Mutation Rate' determines how many genes change. 'Conservative' mode performs point mutations (tweaking notes), while 'Radical' mode performs structural mutations (duplications, inversions, or re-randomization).",
+      "Mutation Parameters: Use the left sidebar to influence evolution. 'Mutation Rate' determines how many genes change. 'Simple Mutation' mode performs point mutations (tweaking notes), while 'Structural Mutation' mode performs structural mutations (duplications, inversions, or re-randomization).",
       "Mutation Focus: Toggle specific filters (Drums, Bass, Melody) to protect certain parts of the genome from mutation while evolving others.",
-      "Evolve & Selection: Clicking 'Evolve' takes you to the 'Selection Chamber'. Three unique descendants are born. If you choose 'Live' on one, it becomes the next parent. If you choose 'Die', that instance is discarded and the other two are recombined to form a new hybrid lineage.",
+      "Evolve & Selection: Clicking 'Evolve' takes you to the 'Selection Chamber'. You can toggle 'Live' or 'Die' for each descendant. Once you've made your choices, click 'Proceed to Next Generation'.",
+      "Recombination: Before proceeding, you can enable 'Recombine survivors'. If active, two random survivors will be hybridized before the next mutation cycle, creating a more diverse lineage.",
       "Evolutionary Path: The right sidebar tracks every generation. Use 'VIEW PATH' to see the direct ancestry of your current genome. You can click any previous generation to 'time travel' and start a new evolutionary branch from that point.",
       "Playback Control: Use the global Play/Stop buttons. The engine uses high-quality synthesis to turn the genetic data into sound in real-time.",
-      "LEARNING CHALLENGE 1 (Conservation): Use the Mutation Analysis tool to evolve a sequence for 5 generations while keeping the Drum layer 100% green (conserved).",
-      "LEARNING CHALLENGE 2 (Radical Shift): Switch to 'Radical' intensity and identify which genetic positions turn red (unique) most frequently. Is it the Melody or the Bass?",
-      "LEARNING CHALLENGE 3 (Hybridization): Use the 'Die' button in the Selection Chamber to force a recombination. Can you spot the yellow (shared) segments that came from different ancestors?"
+      "LEARNING CHALLENGE 1 (Conservation): Use the Mutation Analysis tool to evolve a sequence for 5 generations while keeping the Drum layer 100% conserved (green/blue).",
+      "LEARNING CHALLENGE 2 (Structural Shift): Switch to 'Structural Mutation' intensity and identify which genetic positions turn red (unique) most frequently. Is it the Melody or the Bass?",
+      "LEARNING CHALLENGE 3 (Hybridization): Use the 'Recombine survivors' toggle. Can you spot the yellow (shared) segments that came from the two different parents?",
+      "Created by Rafik Neme"
     ]
   },
   es: {
@@ -110,8 +116,8 @@ export const translations = {
     evolve: "Evolucionar Genoma",
     mutationParams: "Parámetros de Mutación",
     mutationRate: "Tasa de Mutación",
-    conservative: "Conservador",
-    radical: "Radical",
+    conservative: "Mutación simple",
+    radical: "Mutación estructural",
     conservativeDesc: "Cambios pequeños e incrementales. Como las mutaciones puntuales, preserva la estructura central mientras ajusta detalles.",
     radicalDesc: "Cambios grandes y estructurales. Puede duplicar, invertir o re-aleatorizar completamente secciones del genoma.",
     mutationFocus: "Enfoque de Mutación",
@@ -159,6 +165,10 @@ export const translations = {
     fitDesc: "Ajustar secuencia al ancho de la ventana.",
     compare: "Alinear Caminos",
     compareDesc: "Superpone hasta 5 generaciones para observar cambios.",
+    proceed: "Pasar a la Siguiente Generación",
+    recombineQuestion: "¿Recombinar dos sobrevivientes aleatorios?",
+    recombineDesc: "Si se activa, se formará un híbrido antes de la mutación.",
+    credits: "Creado por Rafik Neme",
     editMode: "Edición Manual",
     editModeDesc: "Haz clic y arrastra los bloques para cambiar su tiempo.",
     changeInstrument: "Cambiar Instrumento",
@@ -191,14 +201,16 @@ export const translations = {
     instructions: [
       "Inicialización Raíz: Haz clic en 'Inicializar Lab' para generar tu primera secuencia. Puedes elegir entre 4 'Ancestros Raíz' distintos, cada uno con un perfil genético único (Tempo, Densidad y Tono).",
       "Fenotipo Musical (Timeline): La visualización central muestra los 'genes' de tu música. Cada bloque representa un evento musical. En el Modo Claro, estos son nítidos y de alto contraste. Puedes ver las capas de Batería, Bajo y Melodía.",
-      "Parámetros de Mutación: Usa la barra lateral izquierda para influir en la evolución. La 'Tasa de Mutación' determina cuántos genes cambian. El modo 'Conservador' realiza mutaciones puntuales (ajuste de notas), mientras que el modo 'Radical' realiza mutaciones estructurales (duplicaciones, inversiones o re-aleatorización).",
+      "Parámetros de Mutación: Usa la barra lateral izquierda para influir en la evolución. La 'Tasa de Mutación' determina cuántos genes cambian. El modo 'Mutación simple' realiza mutaciones puntuales (ajuste de notas), mientras que el modo 'Mutación estructural' realiza mutaciones estructurales (duplicaciones, inversiones o re-aleatorización).",
       "Enfoque de Mutación: Activa filtros específicos (Batería, Bajo, Melodía) para proteger ciertas partes del genoma de la mutación mientras evolucionas otras.",
-      "Evolución y Selección: Al hacer clic en 'Evolucionar' entrarás en la 'Cámara de Selección'. Nacen tres descendientes únicos. Si eliges 'Vivir' en uno, se convierte en el próximo padre. Si eliges 'Morir', esa instancia se descarta y las otras dos se recombinan para formar un nuevo linaje híbrido.",
+      "Evolución y Selección: Al hacer clic en 'Evolucionar' entrarás en la 'Cámara de Selección'. Puedes marcar 'Vivir' o 'Morir' para cada descendiente. Una vez elegidos, pulsa 'Pasar a la Siguiente Generación'.",
+      "Recombinación: Antes de pasar, puedes activar 'Recombinar sobrevivientes'. Si se activa, se hibridarán dos sobrevivientes aleatorios antes del siguiente ciclo de mutación, creando un linaje más diverso.",
       "Camino Evolutivo: La barra lateral derecha rastrea cada generación. Usa 'VIEW PATH' para ver la ascendencia directa de tu genoma actual. Puedes hacer clic en cualquier generación anterior para 'viajar en el tiempo' y comenzar una nueva rama evolutiva desde ese punto.",
       "Control de Reproducción: Usa los botones globales de Play/Stop. El motor utiliza síntesis de alta calidad para convertir los datos genéticos en sonido en tiempo real.",
-      "DESAFÍO DE APRENDIZAJE 1 (Conservación): Usa el Análisis de Mutaciones para evolucionar una secuencia durante 5 generaciones manteniendo la capa de Batería 100% verde (conservada).",
-      "DESAFÍO DE APRENDIZAJE 2 (Cambio Radical): Cambia a intensidad 'Radical' e identifica qué posiciones genéticas se vuelven rojas (únicas) con más frecuencia. ¿Es la Melodía o el Bajo?",
-      "DESAFÍO DE APRENDIZAJE 3 (Hibridación): Usa el botón 'Die' en la Cámara de Selección para forzar una recombinación. ¿Puedes identificar los segmentos amarillos (compartidos) que provienen de diferentes ancestros?"
+      "DESAFÍO DE APRENDIZAJE 1 (Conservación): Usa el Análisis de Mutaciones para evolucionar una secuencia durante 5 generaciones manteniendo la capa de Batería 100% conservada (verde/azul).",
+      "DESAFÍO DE APRENDIZAJE 2 (Cambio Estructural): Cambia a intensidad 'Mutación estructural' e identifica qué posiciones genéticas se vuelven rojas (únicas) con más frecuencia. ¿Es la Melodía o el Bajo?",
+      "DESAFÍO DE APRENDIZAJE 3 (Hibridación): Usa el interruptor 'Recombinar sobrevivientes'. ¿Puedes identificar los segmentos amarillos (compartidos) que provienen de los dos padres diferentes?",
+      "Creado por Rafik Neme"
     ]
   }
 };
