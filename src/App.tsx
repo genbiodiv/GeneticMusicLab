@@ -41,6 +41,7 @@ import {
   ShieldCheck,
   MousePointer2,
   Music,
+  PlusSquare,
   ChevronUp,
   ChevronDown
 } from "lucide-react";
@@ -72,11 +73,12 @@ export default function App() {
   const ac = getAccentClasses(accent, theme);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showManual, setShowManual] = useState(false);
-  const [showAncestry, setShowAncestry] = useState(false);
   const [isLineageOpen, setIsLineageOpen] = useState(false);
   const [isAudioSuspended, setIsAudioSuspended] = useState(false);
   const [offspringStatus, setOffspringStatus] = useState<("live" | "die")[]>([]);
   const [shouldRecombine, setShouldRecombine] = useState(false);
+  const [showSaveReminder, setShowSaveReminder] = useState(false);
+  const lastRemindedGen = React.useRef(0);
 
   const t = translations[lang];
 
@@ -104,17 +106,33 @@ export default function App() {
     const path: MusicalGenome[] = [];
     let currentId: string | undefined = currentGenome.genomeId;
     
-    while (currentId) {
-      const ancestor = lineage.find(g => g.genomeId === currentId);
+    // Use a Set to prevent infinite loops in case of circular references (shouldn't happen but good safety)
+    const visited = new Set<string>();
+
+    while (currentId && !visited.has(currentId)) {
+      visited.add(currentId);
+      // Handle multiple parents by picking the first one for the visual path
+      const primaryId = currentId.split('+')[0];
+      const ancestor = lineage.find(g => g.genomeId === primaryId);
+      
       if (ancestor) {
         path.unshift(ancestor);
-        currentId = ancestor.parentId;
+        currentId = ancestor.parentId || undefined;
       } else {
         break;
       }
     }
     return path;
   };
+
+  // Save reminder logic
+  useEffect(() => {
+    const currentGen = lineage.length;
+    if (currentGen > 0 && currentGen % 20 === 0 && currentGen !== lastRemindedGen.current) {
+      setShowSaveReminder(true);
+      lastRemindedGen.current = currentGen;
+    }
+  }, [lineage.length]);
 
   const handleExportSession = () => {
     if (!currentGenome) return;
@@ -320,6 +338,27 @@ export default function App() {
     setOffspring(null);
   };
 
+  const handleRestartFromAncestor = (genome: MusicalGenome) => {
+    const path = getAncestryPath();
+    const index = path.findIndex(g => g.genomeId === genome.genomeId);
+    if (index !== -1) {
+      const newPath = path.slice(0, index + 1);
+      // We keep the full lineage array but the "current path" is truncated for the user's new branch
+      // Actually, to "restart", we should probably filter lineage to only include ancestors of this genome
+      const newLineage: MusicalGenome[] = [];
+      let curr: MusicalGenome | undefined = genome;
+      while (curr) {
+        newLineage.unshift(curr);
+        const pid = curr.parentId?.split('+')[0];
+        curr = lineage.find(g => g.genomeId === pid);
+      }
+      setLineage(newLineage);
+      setCurrentGenome(genome);
+      setEvolutionParent(genome);
+      setOffspring(null);
+    }
+  };
+
   const handleLoadStarter = async () => {
     await resumeAudio();
     const starter = { ...DEFAULT_GENOME, genomeId: `starter_${Date.now()}` };
@@ -428,16 +467,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {currentGenome && (
-              <button
-                onClick={stop}
-                disabled={!isLoaded}
-                title={t.stopDesc}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all bg-red-600 text-white hover:bg-red-500"
-              >
-                <Square size={18} fill="currentColor" />
-              </button>
-            )}
           </div>
         </nav>
       </header>
@@ -696,7 +725,7 @@ export default function App() {
                   >
                     <div className="flex justify-between items-center">
                       <span className={`px-2 py-0.5 ${ac.bg600_10} ${ac.text600} rounded-full text-[9px] font-mono font-bold uppercase`}>
-                        {t.option} {idx + 1}
+                        {t.descendant} {idx + 1}
                       </span>
                       <div className="flex gap-1">
                         <button
@@ -923,60 +952,98 @@ export default function App() {
                   exit={{ opacity: 0 }}
                   className="pb-8 pt-2"
                 >
-                  <p className={`text-[10px] mb-4 opacity-70 italic ${theme === "dark" ? "text-white" : "text-zinc-600"}`}>
-                    {t.lineageInstructions}
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                    {/* Legend/Instructions */}
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4 p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                      <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-wider opacity-70">
+                        <Play size={10} className={ac.text600} /> {t.lineageLegend.play}
+                      </div>
+                      <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-wider opacity-70">
+                        <Activity size={10} className={ac.text600} /> {t.lineageLegend.visualize}
+                      </div>
+                      <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-wider opacity-70">
+                        <PlusSquare size={10} className={ac.text600} /> {t.lineageLegend.compare}
+                      </div>
+                      <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-wider opacity-70">
+                        <RefreshCw size={10} className="text-red-500" /> {t.lineageLegend.restart}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                     {lineage.map((g, idx) => (
                       <div 
                         key={g.genomeId} 
-                        className={`p-3 rounded-xl border transition-all cursor-pointer group relative ${
+                        className={`p-2 rounded-xl border transition-all cursor-pointer group relative ${
                           selectedForComparison.includes(g.genomeId)
                             ? `${ac.border500} ${ac.bg500_5}`
                             : theme === "dark" ? "border-white/5 bg-black/20 hover:border-white/20" : "border-black/10 bg-zinc-50 hover:border-black"
                         }`}
                         onClick={() => toggleComparison(g.genomeId)}
                       >
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-[10px] font-mono font-bold">GEN {g.generation}</span>
-                          <div className={`w-2 h-2 rounded-full ${selectedForComparison.includes(g.genomeId) ? ac.bg500 : 'bg-zinc-700'}`} />
-                        </div>
-                        <p className="text-[9px] font-mono opacity-50 truncate mb-2">{g.genomeId.slice(-8)}</p>
-                        
-                        <div className="flex gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              play(g);
-                            }}
-                            className={`p-1.5 rounded-lg ${ac.bg600} text-white ${ac.hoverBg500} transition-all`}
-                          >
-                            <Play size={10} fill="currentColor" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentGenome(g);
-                              setEvolutionParent(g);
-                              setOffspring(null);
-                            }}
-                            className={`p-1.5 rounded-lg transition-all ${
-                              theme === "dark" ? "bg-white/10 hover:bg-white/20" : "bg-black/5 hover:bg-black/10"
-                            }`}
-                            title={t.selectThisAncestor}
-                          >
-                            <Activity size={10} />
-                          </button>
-                        </div>
+                          <div className="flex justify-between items-center gap-2">
+                            <span className="text-[10px] font-mono font-bold shrink-0">G{g.generation}</span>
+                            
+                            <div className="flex gap-1.5 items-center">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  play(g);
+                                }}
+                                className={`p-1.5 rounded-md ${ac.bg600} text-white ${ac.hoverBg500} transition-all`}
+                                title={t.play}
+                              >
+                                <Play size={12} fill="currentColor" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCurrentGenome(g);
+                                  setEvolutionParent(g);
+                                  setOffspring(null);
+                                }}
+                                className={`p-1.5 rounded-md transition-all ${
+                                  theme === "dark" ? "bg-white/10 hover:bg-white/20" : "bg-black/5 hover:bg-black/10"
+                                }`}
+                                title={t.visualize}
+                              >
+                                <Activity size={12} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleComparison(g.genomeId);
+                                }}
+                                className={`p-1.5 rounded-md transition-all ${
+                                  selectedForComparison.includes(g.genomeId)
+                                    ? `${ac.bg600} text-white`
+                                    : theme === "dark" ? "bg-white/10 hover:bg-white/20" : "bg-black/5 hover:bg-black/10"
+                                }`}
+                                title={t.compare}
+                              >
+                                <PlusSquare size={12} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRestartFromAncestor(g);
+                                }}
+                                className={`p-1.5 rounded-md transition-all ${
+                                  theme === "dark" ? "bg-red-500/10 hover:bg-red-500/20 text-red-400" : "bg-red-50 hover:bg-red-100 text-red-600"
+                                }`}
+                                title={t.restartLineage}
+                              >
+                                <RefreshCw size={12} />
+                              </button>
+                            </div>
+                          </div>
 
                         {g.genomeId === currentGenome.genomeId && (
-                          <div className={`absolute -top-1 -right-1 px-1.5 py-0.5 ${ac.bg600} text-white text-[7px] font-bold rounded-md uppercase`}>
-                            Current
+                          <div className={`absolute -top-1 -right-1 px-1 py-0.5 ${ac.bg600} text-white text-[5px] font-bold rounded uppercase`}>
+                            NOW
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1131,85 +1198,50 @@ export default function App() {
           </div>
         )}
 
-        {showAncestry && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6" role="dialog" aria-modal="true" aria-labelledby="modal-ancestry-title">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAncestry(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className={`relative max-w-2xl w-full rounded-3xl p-8 shadow-2xl overflow-hidden flex flex-col max-h-[80vh] ${
-                theme === "dark" ? "bg-zinc-900 border border-white/10" : "bg-white border-2 border-black"
-              }`}
+        {/* Save Reminder Notification */}
+        <AnimatePresence>
+          {showSaveReminder && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] w-full max-w-md px-4"
             >
-              <div className="p-8 border-b border-white/10 flex justify-between items-center">
-                <h3 id="modal-ancestry-title" className="text-2xl font-bold flex items-center gap-3">
-                  <GitBranch className={ac.text600} aria-hidden="true" />
-                  {t.lineageTitle}
-                </h3>
-                <button 
-                  onClick={() => setShowAncestry(false)}
-                  aria-label="Close ancestry path"
-                  className={`p-2 rounded-full transition-all ${ac.ring500} outline-none ${
-                    theme === "dark" ? "hover:bg-white/5" : "hover:bg-black/5"
-                  }`}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-8 space-y-6">
-                {getAncestryPath().map((genome, i) => (
-                  <div key={genome.genomeId} className="relative">
-                    {i < getAncestryPath().length - 1 && (
-                      <div className={`absolute left-4 top-10 bottom-[-24px] w-0.5 ${ac.bg600_30}`} />
-                    )}
-                    <div className="flex gap-6 items-start">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 z-10 ${
-                        genome.genomeId === currentGenome?.genomeId 
-                          ? `${ac.bg600} text-white ring-4 ${ac.ring600_20}` 
-                          : "bg-zinc-800 text-white"
-                      }`}>
-                        {genome.generation}
-                      </div>
-                      <div 
-                        onClick={() => {
-                          selectFromLineage(genome);
-                          setShowAncestry(false);
-                        }}
-                        className={`flex-1 p-4 rounded-2xl border cursor-pointer transition-all group ${
-                          genome.genomeId === currentGenome?.genomeId
-                            ? `${ac.bg600_10} ${ac.border600}`
-                            : theme === "dark" 
-                              ? `bg-black/40 border-white/10 ${ac.hoverBorder600_50}` 
-                              : `bg-zinc-50 border-black ${ac.hoverBorder600}`
-                        }`}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <span className={`text-[10px] font-mono ${ac.text600} font-bold`}>GEN {genome.generation}</span>
-                          <span className="text-[10px] text-zinc-500 font-mono">{genome.genomeId}</span>
-                        </div>
-                        <p className={`text-sm font-bold ${theme === "dark" ? "text-zinc-200" : "text-zinc-900"}`}>
-                          {genome.summary}
-                        </p>
-                        <div className="mt-3 flex gap-4 text-[10px] text-zinc-500 font-mono">
-                          <span>{genome.tempo} BPM</span>
-                          <span>{genome.layers.length} {t.layers}</span>
-                        </div>
-                      </div>
-                    </div>
+              <div className={`p-6 rounded-3xl shadow-2xl border-2 flex flex-col gap-4 ${
+                theme === "dark" ? "bg-zinc-900 border-white/10" : "bg-white border-black"
+              }`}>
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-2xl ${ac.bg600_10} ${ac.text600}`}>
+                    <Download size={24} />
                   </div>
-                ))}
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm">{t.saveReminder}</h4>
+                    <p className="text-xs text-zinc-500">{t.exportSessionDesc}</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      handleExportSession();
+                      setShowSaveReminder(false);
+                    }}
+                    className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${ac.bg600} text-white hover:opacity-90`}
+                  >
+                    {t.saveNow}
+                  </button>
+                  <button
+                    onClick={() => setShowSaveReminder(false)}
+                    className={`px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                      theme === "dark" ? "bg-white/5 hover:bg-white/10" : "bg-black/5 hover:bg-black/10"
+                    }`}
+                  >
+                    {t.close}
+                  </button>
+                </div>
               </div>
             </motion.div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
       </AnimatePresence>
 
       {/* Footer */}
