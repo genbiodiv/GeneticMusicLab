@@ -22,43 +22,43 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
         { id: "snare_01", times: [1, 3] },
         { id: "hihat_01", times: [0.5, 1.5, 2.5, 3.5, 4.5] }
       ],
-      bass: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5],
+      bass: [0, 0.5, 1.5, 2, 2.5, 3.5, 4, 4.5],
       melody: [0.25, 1.25, 2.25, 3.25, 4.25]
     },
     {
       nameKey: "styleAmbient",
       summaryKey: "styleAmbientDesc",
-      tempo: 70,
+      tempo: 80,
       drums: [
-        { id: "kick_01", times: [0, 4] },
-        { id: "hihat_01", times: [2] }
+        { id: "kick_01", times: [0, 2.5] },
+        { id: "hihat_01", times: [1.25, 3.75] }
       ],
-      bass: [0, 2.5],
-      melody: [0.5, 3.5]
+      bass: [0, 2, 4],
+      melody: [0.5, 1.5, 2.5, 3.5, 4.5]
     },
     {
       nameKey: "styleFunk",
       summaryKey: "styleFunkDesc",
-      tempo: 105,
+      tempo: 100,
       drums: [
         { id: "kick_01", times: [0, 0.75, 2, 2.75] },
         { id: "snare_01", times: [1, 3] },
         { id: "hihat_01", times: [0.25, 0.5, 1.25, 1.5, 2.25, 2.5, 3.25, 3.5] }
       ],
-      bass: [0, 0.75, 1.5, 2, 2.75, 3.5],
-      melody: [0.5, 1, 2.5, 3]
+      bass: [0, 1, 2, 3, 4],
+      melody: [0.5, 1.5, 2.5, 3.5]
     },
     {
       nameKey: "styleGlitch",
       summaryKey: "styleGlitchDesc",
-      tempo: 160,
+      tempo: 140,
       drums: [
-        { id: "kick_01", times: [0, 0.1, 0.5, 1.2, 2, 2.1, 3.5] },
-        { id: "snare_01", times: [0.8, 1.8, 2.8, 3.8] },
-        { id: "hihat_01", times: [0.05, 0.15, 0.25, 0.35, 1.05, 2.05, 3.05] }
+        { id: "kick_01", times: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5] },
+        { id: "snare_01", times: [0.75, 1.75, 2.75, 3.75, 4.75] },
+        { id: "hihat_01", times: [0.25, 0.75, 1.25, 1.75, 2.25, 2.75, 3.25, 3.75, 4.25, 4.75] }
       ],
-      bass: [0.1, 1.1, 2.1, 3.1],
-      melody: [0.2, 0.4, 0.6, 1.2, 1.4, 2.2, 2.4, 3.2, 3.4]
+      bass: [0.25, 1.25, 2.25, 3.25, 4.25],
+      melody: [0, 1, 2, 3, 4]
     }
   ];
 
@@ -238,22 +238,27 @@ export async function mutateGenome(
   const variantNames = ["", "variant1", "variant2", "variant3"];
   newGenome.summary = `Generation ${newGenome.generation} - ${variantNames[variantType]}`;
   
-  // Resolve overlaps to avoid noise
+  // Resolve overlaps and cap duration to target
   newGenome.layers.forEach(layer => {
-    layer.events = resolveOverlaps(layer.events);
+    layer.events = resolveOverlaps(layer.events, newGenome.durationTarget);
   });
   
   return newGenome;
 }
 
-function resolveOverlaps(events: any[]): any[] {
-  if (events.length <= 1) return events;
+function resolveOverlaps(events: any[], maxDuration: number): any[] {
+  if (events.length === 0) return [];
   
   // Sort by start time
   const sorted = [...events].sort((a, b) => a.start - b.start);
   const resolved: any[] = [];
   
   sorted.forEach((event, i) => {
+    // Cap duration to not exceed maxDuration
+    if (event.start + event.duration > maxDuration) {
+      event.duration = Math.max(0.05, maxDuration - event.start);
+    }
+
     if (i === 0) {
       resolved.push(event);
       return;
@@ -266,13 +271,21 @@ function resolveOverlaps(events: any[]): any[] {
       // If they overlap, shorten the previous one
       last.duration = Math.max(0.05, last.duration - overlap);
       
-      // If even after shortening they still overlap (meaning event starts before last starts, which shouldn't happen with sort)
-      // or if shortening makes it too small, we might need to shift the current one
+      // If even after shortening they still overlap
       if (last.start + last.duration > event.start) {
         event.start = last.start + last.duration;
       }
     }
-    resolved.push(event);
+
+    // Final check for the current event after potential start shift
+    if (event.start + event.duration > maxDuration) {
+      event.duration = Math.max(0.05, maxDuration - event.start);
+    }
+    
+    // If start is pushed beyond maxDuration, don't add it
+    if (event.start < maxDuration) {
+      resolved.push(event);
+    }
   });
   
   return resolved;
@@ -308,8 +321,8 @@ export async function recombineGenomes(
       eventId: `e_${Math.random().toString(36).substring(2, 11)}`
     }));
     
-    // Resolve overlaps
-    return { ...layer, events: resolveOverlaps(mixedEvents) };
+    // Resolve overlaps and cap duration
+    return { ...layer, events: resolveOverlaps(mixedEvents, newGenome.durationTarget) };
   });
 
   return newGenome;

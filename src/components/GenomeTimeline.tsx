@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { MusicalGenome } from "../types";
 import { motion } from "motion/react";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { getAccentClasses } from "../utils/theme";
 
 interface GenomeTimelineProps {
   genome: MusicalGenome;
@@ -25,7 +26,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   genome, 
   currentTime, 
   theme = "dark", 
-  zoom = 1,
+  zoom: zoomProp,
   onZoomChange,
   onEventMove,
   overlayGenomes = [],
@@ -36,9 +37,21 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [internalZoom, setInternalZoom] = useState(zoomProp || 1);
+  
+  const zoom = zoomProp !== undefined ? zoomProp : internalZoom;
   const duration = genome.durationTarget || 5;
   const basePixelsPerSecond = 180;
-  const pixelsPerSecond = basePixelsPerSecond * (zoom ?? 1);
+  const pixelsPerSecond = basePixelsPerSecond * zoom;
+
+  const handleZoomChange = (newZoom: number) => {
+    const clampedZoom = Math.max(0.1, Math.min(4, newZoom));
+    if (onZoomChange) {
+      onZoomChange(clampedZoom);
+    } else {
+      setInternalZoom(clampedZoom);
+    }
+  };
 
   // Helper to determine conservation status of an event
   const getConservationStatus = (layerId: string, event: any, targetGenome: MusicalGenome = genome) => {
@@ -89,17 +102,19 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   };
 
   const isRadical = intensity === "radical";
+  const accent = isRadical ? "blue" : "emerald";
+  const ac = getAccentClasses(accent, theme as "dark" | "light");
 
   const getStatusColorValue = (status: string) => {
     switch (status) {
       case "conserved": 
-        if (isRadical) return theme === "dark" ? "#3b82f666" : "#60a5fa"; // blue-500/40 or blue-400
-        return theme === "dark" ? "#22c55e66" : "#4ade80"; // green-500/40 or green-400
-      case "shared": return theme === "dark" ? "#eab30866" : "#facc15"; // yellow-500/40 or yellow-400
-      case "unique": return theme === "dark" ? "#ef444466" : "#f87171"; // red-500/40 or red-400
+        if (isRadical) return theme === "dark" ? "#f59e0b66" : "#3b82f6"; // amber-500/40 or blue-500
+        return theme === "dark" ? "#10b98166" : "#059669"; // emerald-500/40 or emerald-600
+      case "shared": return theme === "dark" ? "#eab30866" : "#ca8a04"; // yellow-500/40 or yellow-600
+      case "unique": return theme === "dark" ? "#ef444466" : "#dc2626"; // red-500/40 or red-600
       default: 
-        if (isRadical) return theme === "dark" ? "#3b82f64d" : "#60a5fa"; // blue-500/30 or blue-400
-        return theme === "dark" ? "#10b9814d" : "#34d399"; // emerald-500/30 or emerald-400
+        if (isRadical) return theme === "dark" ? "#f59e0b4d" : "#3b82f6"; // amber-500/30 or blue-500
+        return theme === "dark" ? "#10b9814d" : "#059669"; // emerald-500/30 or emerald-600
     }
   };
 
@@ -123,22 +138,21 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   };
 
   const getEventColor = (status: string | null, isGhost: boolean = false) => {
-    const accent = isRadical ? "blue" : "emerald";
     if (!status) {
       if (isGhost) return ""; // Use default ghost color logic
-      return theme === "dark" ? `bg-${accent}-500/30 border-${accent}-500/50` : `bg-${accent}-400 border-${accent}-600`;
+      return theme === "dark" ? `${ac.bg500_30} ${ac.border500_50}` : `bg-zinc-200 border-zinc-400 text-zinc-900`;
     }
     
     switch (status) {
       case "conserved":
-        if (isRadical) return theme === "dark" ? "bg-blue-500/40 border-blue-500" : "bg-blue-400 border-blue-600";
-        return theme === "dark" ? "bg-green-500/40 border-green-500" : "bg-green-400 border-green-600";
+        if (isRadical) return theme === "dark" ? "bg-amber-500/40 border-amber-500" : "bg-blue-500 border-blue-700";
+        return theme === "dark" ? "bg-emerald-500/40 border-emerald-500" : "bg-emerald-500 border-emerald-700";
       case "shared":
-        return theme === "dark" ? "bg-yellow-500/40 border-yellow-500" : "bg-yellow-400 border-yellow-600";
+        return theme === "dark" ? "bg-yellow-500/40 border-yellow-500" : "bg-yellow-500 border-yellow-700";
       case "unique":
-        return theme === "dark" ? "bg-red-500/40 border-red-500" : "bg-red-400 border-red-600";
+        return theme === "dark" ? "bg-red-500/40 border-red-500" : "bg-red-500 border-red-700";
       default:
-        return theme === "dark" ? `bg-${accent}-500/30 border-${accent}-500/50` : `bg-${accent}-400 border-${accent}-600`;
+        return theme === "dark" ? `${ac.bg500_30} ${ac.border500_50}` : `bg-zinc-200 border-zinc-400 text-zinc-900`;
     }
   };
 
@@ -155,16 +169,20 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  const handleFitToScreen = () => {
-    if (onZoomChange) {
-      // Use the actual measured width of the container
-      const targetWidth = containerWidth || containerRef.current?.getBoundingClientRect().width || window.innerWidth;
-      // Subtract padding (p-2 on mobile, p-4 on md)
-      const padding = window.innerWidth < 768 ? 16 : 32;
-      const availableWidth = targetWidth - padding - 8; // Extra buffer
-      const newZoom = availableWidth / (duration * basePixelsPerSecond);
-      onZoomChange(Math.max(0.1, newZoom));
+  useEffect(() => {
+    if (containerWidth > 0) {
+      handleFitToScreen();
     }
+  }, [containerWidth]);
+
+  const handleFitToScreen = () => {
+    // Use the actual measured width of the container
+    const targetWidth = containerWidth || containerRef.current?.getBoundingClientRect().width || window.innerWidth;
+    // Subtract padding (p-2 on mobile, p-4 on md)
+    const padding = window.innerWidth < 768 ? 16 : 32;
+    const availableWidth = targetWidth - padding - 8; // Extra buffer
+    const newZoom = availableWidth / (duration * basePixelsPerSecond);
+    handleZoomChange(newZoom);
   };
 
   const handleMouseDown = (e: React.MouseEvent, layerId: string, eventId: string, currentStart: number) => {
@@ -191,37 +209,35 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`w-full rounded-xl border p-2 md:p-4 overflow-x-auto transition-colors duration-300 ${
+      className={`w-full rounded-xl border p-2 md:p-4 overflow-x-auto transition-colors duration-300 relative ${
       theme === "dark" 
         ? "bg-zinc-900/50 border-white/10" 
         : "bg-white border-black"
     }`}>
-      {/* Timeline Controls */}
-      <div className="flex items-center justify-end gap-2 mb-4">
-        <div className={`flex items-center gap-1 p-1 rounded-lg border ${
-          theme === "dark" ? "bg-black/20 border-white/5" : "bg-zinc-100 border-black/10"
+      {/* Timeline Controls - Top Left */}
+      <div className="absolute top-2 left-2 md:top-4 md:left-4 z-40">
+        <div className={`flex items-center gap-1 p-1 rounded-lg border shadow-lg backdrop-blur-md ${
+          theme === "dark" ? "bg-black/60 border-white/10" : "bg-white/80 border-black/10"
         }`}>
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              const currentZoom = zoom ?? 1;
-              onZoomChange?.(Math.max(0.2, currentZoom - 0.2));
+              handleZoomChange(zoom - 0.2);
             }}
-            className={`p-1 hover:text-${isRadical ? 'blue' : 'emerald'}-500 transition-colors cursor-pointer`}
+            className={`p-1 ${ac.hoverText500} transition-colors cursor-pointer`}
             title={labels?.zoomOut || "Zoom Out"}
           >
             <ZoomOut size={14} />
           </button>
           <span className="text-[10px] font-mono w-10 text-center font-bold">
-            {Math.round((zoom ?? 1) * 100)}%
+            {Math.round(zoom * 100)}%
           </span>
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              const currentZoom = zoom ?? 1;
-              onZoomChange?.(Math.min(4, currentZoom + 0.2));
+              handleZoomChange(zoom + 0.2);
             }}
-            className={`p-1 hover:text-${isRadical ? 'blue' : 'emerald'}-500 transition-colors cursor-pointer`}
+            className={`p-1 ${ac.hoverText500} transition-colors cursor-pointer`}
             title={labels?.zoomIn || "Zoom In"}
           >
             <ZoomIn size={14} />
@@ -232,7 +248,7 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
               e.stopPropagation();
               handleFitToScreen();
             }}
-            className={`p-1 hover:text-${isRadical ? 'blue' : 'emerald'}-500 transition-colors flex items-center gap-1 cursor-pointer`}
+            className={`p-1 ${ac.hoverText500} transition-colors flex items-center gap-1 cursor-pointer`}
             title={labels?.fit || "Fit to Screen"}
           >
             <Maximize2 size={14} />
@@ -241,26 +257,26 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
         </div>
       </div>
 
-      <div className="relative" style={{ width: `${duration * pixelsPerSecond}px`, minHeight: "160px" }}>
+      <div className="relative pt-8" style={{ width: `${duration * pixelsPerSecond}px`, minHeight: "120px" }}>
         {/* Playhead */}
         <motion.div 
-          className={`absolute top-0 bottom-0 w-0.5 bg-${isRadical ? 'blue' : 'emerald'}-500 z-30`}
+          className={`absolute top-0 bottom-0 w-0.5 ${ac.bg500} z-30`}
           animate={{ left: `${currentTime * pixelsPerSecond}px` }}
           transition={{ type: "tween", ease: "linear", duration: 0.1 }}
         />
 
         {/* Layers */}
-        <div className="space-y-2 md:space-y-4">
+        <div className="space-y-1 md:space-y-2">
           {(genome.layers || []).map((layer, idx) => (
             <div key={layer.layerId} className={`relative rounded-lg border group transition-all duration-300 ${
-              overlayGenomes.length > 0 ? "h-20 md:h-24" : "h-10 md:h-12"
+              overlayGenomes.length > 0 ? "h-16 md:h-20" : "h-8 md:h-10"
             } ${
               theme === "dark"
                 ? "bg-white/5 border-white/5"
                 : "bg-zinc-100/50 border-black/10"
             }`}>
               <div className={`absolute -left-1 md:-left-2 top-1/2 -translate-y-1/2 -translate-x-full pr-2 md:pr-4 text-[8px] md:text-[10px] uppercase tracking-widest font-mono font-bold text-right min-w-[60px] z-20 ${
-                theme === "dark" ? "text-zinc-500" : "text-zinc-900"
+                theme === "dark" ? "text-zinc-300" : "text-zinc-900"
               }`}>
                 {layer.role || layer.layerId}
               </div>
@@ -327,8 +343,8 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
                   >
                     <span className={`text-[8px] font-mono truncate px-1 font-bold ${
                       theme === "dark" 
-                        ? (isRadical ? "text-blue-200" : "text-emerald-200") 
-                        : (isRadical ? "text-blue-950" : "text-emerald-950")
+                        ? (isRadical ? ac.text200 : ac.text200) 
+                        : (isRadical ? ac.text950 : ac.text950)
                     } ${overlayGenomes.length > 2 ? 'hidden' : ''}`}>
                       {event.sampleId}
                     </span>
@@ -340,15 +356,15 @@ export const GenomeTimeline: React.FC<GenomeTimelineProps> = ({
         </div>
 
         {/* Time Markers */}
-        <div className={`mt-4 flex border-t pt-2 transition-colors duration-300 ${
+        <div className={`mt-2 relative border-t pt-1 transition-colors duration-300 ${
           theme === "dark" ? "border-white/10" : "border-black/20"
-        }`}>
+        }`} style={{ height: '20px' }}>
           {Array.from({ length: Math.ceil(duration) + 1 }).map((_, i) => (
-            <div key={i} className="relative" style={{ width: `${pixelsPerSecond}px` }}>
-              <div className={`absolute left-0 h-2 w-px transition-colors duration-300 ${
+            <div key={i} className="absolute" style={{ left: `${i * pixelsPerSecond}px` }}>
+              <div className={`h-1.5 w-px transition-colors duration-300 ${
                 theme === "dark" ? "bg-white/20" : "bg-black/20"
               }`} />
-              <span className={`absolute left-1 top-2 text-[10px] font-mono font-bold ${
+              <span className={`absolute left-1 top-1 text-[9px] font-mono font-bold ${
                 theme === "dark" ? "text-zinc-600" : "text-zinc-900"
               }`}>{i}s</span>
             </div>

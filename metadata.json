@@ -1,5 +1,5 @@
 {
-  "name": "Genetic Music Lab",
+  "name": "Laboratorio de Música Genética",
   "description": "An interactive evolutionary music laboratory where musical compositions are treated as genomes that can be mutated, inherited, and evolved over generations.",
   "requestFramePermissions": []
 }

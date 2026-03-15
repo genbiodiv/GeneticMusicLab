@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
+import { getAccentClasses } from "../utils/theme";
 
 interface LabLogoProps {
   size?: number;
@@ -10,6 +11,7 @@ interface LabLogoProps {
 export const LabLogo: React.FC<LabLogoProps> = ({ size = 40, theme = "dark", intensity = "conservative" }) => {
   const isRadical = intensity === "radical";
   const accent = isRadical ? "blue" : "emerald";
+  const ac = getAccentClasses(accent, theme as "dark" | "light");
   // DNA Helix parameters
   const rungs = 6;
   const width = size;
@@ -25,7 +27,7 @@ export const LabLogo: React.FC<LabLogoProps> = ({ size = 40, theme = "dark", int
     >
       {/* Background Glow */}
       <motion.div 
-        className={`absolute inset-0 bg-${accent}-600/20 blur-xl`}
+        className={`absolute inset-0 ${ac.bg600_20} blur-xl`}
         animate={{ 
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.6, 0.3]
@@ -47,7 +49,7 @@ export const LabLogo: React.FC<LabLogoProps> = ({ size = 40, theme = "dark", int
           stroke="currentColor"
           strokeWidth={size * 0.08}
           strokeLinecap="round"
-          className={`text-${accent}-500 opacity-40`}
+          className={`${ac.text500} opacity-40`}
           animate={{ 
             d: [
               `M ${padding} ${padding} Q ${width/2} ${height/2} ${width-padding} ${height-padding}`,
@@ -62,7 +64,7 @@ export const LabLogo: React.FC<LabLogoProps> = ({ size = 40, theme = "dark", int
           stroke="currentColor"
           strokeWidth={size * 0.08}
           strokeLinecap="round"
-          className={`text-${accent}-400 opacity-40`}
+          className={`${ac.text400} opacity-40`}
           animate={{ 
             d: [
               `M ${width-padding} ${padding} Q ${width/2} ${height/2} ${padding} ${height-padding}`,
@@ -103,7 +105,7 @@ export const LabLogo: React.FC<LabLogoProps> = ({ size = 40, theme = "dark", int
                 cy={y}
                 r={size * 0.06}
                 fill="currentColor"
-                className={theme === "dark" ? `text-${accent}-300` : `text-${accent}-600`}
+                className={theme === "dark" ? ac.text300 : ac.text600}
                 animate={{ 
                   cx: [width/2 + xOffset, width/2 - xOffset, width/2 + xOffset],
                   scale: [1, 1.2, 1],
@@ -120,7 +122,7 @@ export const LabLogo: React.FC<LabLogoProps> = ({ size = 40, theme = "dark", int
           cy={height/2}
           r={size * 0.15}
           fill="currentColor"
-          className={`text-${accent}-500`}
+          className={ac.text500}
           animate={{ 
             scale: [0.8, 1.5, 0.8],
             opacity: [0.4, 0.8, 0.4],
