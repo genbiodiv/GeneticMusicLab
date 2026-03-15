@@ -24,6 +24,7 @@ import {
   Info,
   RefreshCw,
   ArrowRightLeft,
+  ArrowLeft,
   ChevronRight,
   Sun,
   Moon,
@@ -70,6 +71,7 @@ export default function App() {
   const accent: AccentColor = isRadical ? "blue" : "emerald";
   const ac = getAccentClasses(accent, theme);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [showAncestry, setShowAncestry] = useState(false);
   const [isLineageOpen, setIsLineageOpen] = useState(false);
   const [isAudioSuspended, setIsAudioSuspended] = useState(false);
@@ -1042,32 +1044,88 @@ export default function App() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-                {t.instructions.map((step, i) => {
-                  const [title, ...rest] = step.split(':');
-                  return (
-                    <div key={i} className="flex gap-6 items-start">
-                      <div className={`w-8 h-8 rounded-xl ${ac.bg600_10} ${ac.text500} flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 border ${ac.border500_20}`}>
-                        {i + 1}
-                      </div>
-                      <div className="space-y-1">
-                        {rest.length > 0 ? (
-                          <>
-                            <h4 className={`text-sm font-bold uppercase tracking-wider ${theme === "dark" ? ac.text500 : ac.text600}`}>
-                              {title}
-                            </h4>
-                            <p className={`text-sm font-medium leading-relaxed ${theme === "dark" ? "text-zinc-200" : "text-zinc-600"}`}>
-                              {rest.join(':').trim()}
-                            </p>
-                          </>
-                        ) : (
-                          <p className={`text-sm font-bold leading-relaxed ${theme === "dark" ? "text-zinc-300" : "text-zinc-700"}`}>
-                            {step}
-                          </p>
-                        )}
+                {!showManual ? (
+                  <>
+                    <div className="space-y-6">
+                      <h4 className={`text-lg font-bold ${ac.text600}`}>{t.quickGuideTitle}</h4>
+                      <div className="space-y-4">
+                        {t.quickGuideSteps.map((step, i) => {
+                          const [title, ...rest] = step.split(':');
+                          return (
+                            <div key={i} className="flex gap-4 items-start">
+                              <div className={`w-6 h-6 rounded-lg ${ac.bg600} text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}>
+                                {i + 1}
+                              </div>
+                              <div className="space-y-1">
+                                <h5 className={`text-sm font-bold uppercase tracking-wider ${theme === "dark" ? ac.text500 : ac.text600}`}>
+                                  {title}
+                                </h5>
+                                <p className={`text-sm font-medium leading-relaxed ${theme === "dark" ? "text-zinc-300" : "text-zinc-600"}`}>
+                                  {rest.join(':').trim()}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="pt-4">
+                      <button
+                        onClick={() => setShowManual(true)}
+                        className={`w-full py-4 rounded-2xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${
+                          theme === "dark" 
+                            ? "border-white/10 hover:bg-white/5 text-white" 
+                            : "border-black hover:bg-black/5 text-black"
+                        }`}
+                      >
+                        <BookOpen size={18} />
+                        {t.openManual}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between">
+                      <h4 className={`text-lg font-bold ${ac.text600}`}>{t.manualTitle}</h4>
+                      <button
+                        onClick={() => setShowManual(false)}
+                        className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 ${ac.text600} hover:opacity-70 transition-all`}
+                      >
+                        <ArrowLeft size={14} />
+                        {t.backToGuide}
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <h5 className={`text-xl font-bold ${theme === "dark" ? "text-white" : "text-black"}`}>{t.manualWelcome}</h5>
+                        <p className={`text-sm font-bold italic ${ac.text500}`}>{t.manualIntro}</p>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {t.manualBody.map((paragraph, i) => (
+                          <p key={i} className={`text-sm leading-relaxed ${theme === "dark" ? "text-zinc-300" : "text-zinc-600"}`}>
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4">
+                      <button
+                        onClick={() => setShowManual(false)}
+                        className={`w-full py-4 rounded-2xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${
+                          theme === "dark" 
+                            ? "border-white/10 hover:bg-white/5 text-white" 
+                            : "border-black hover:bg-black/5 text-black"
+                        }`}
+                      >
+                        <ArrowLeft size={18} />
+                        {t.backToGuide}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

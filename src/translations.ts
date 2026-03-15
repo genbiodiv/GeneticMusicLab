@@ -38,6 +38,33 @@ export const translations = {
     selectionRoom: "Descendants",
     selectionDesc: "New descendants have been born. Use the toggle to decide who survives. Survivors will be hybridized to create the next generation.",
     instructionsTitle: "Instructions",
+    quickGuideTitle: "How to use the Genetic Music Lab",
+    quickGuideSteps: [
+      "Choose a musical ancestor: Select an initial song that will function as the root genome.",
+      "Define how mutations will occur: Choose between simple mutation (small changes) or structural mutation (large changes). You can decide which parts mutate: melody, bass, or drums.",
+      "Generate descendants: The system creates several mutated versions of the original song.",
+      "Select which ones survive: Listen to each descendant and decide which live and which die.",
+      "Evolve the next generation: Survivors can mutate again or recombine with each other."
+    ],
+    manualTitle: "Laboratory Manual",
+    manualWelcome: "Welcome to the Genetic Music Lab",
+    manualIntro: "In this laboratory, music evolves.",
+    manualBody: [
+      "Each composition behaves like a musical genome: it can mutate, be inherited, and recombine over generations. The system generates populations of musical variants, and you act as a selection agent, guiding evolution toward new sound forms.",
+      "The process begins by selecting an initial song, which functions as the root ancestor of the experiment. This piece contains the original set of musical genes —melody, bass, and drums— from which all variations will arise.",
+      "Once the ancestor is chosen, you define how the music will evolve. You can apply simple mutations, which produce small adjustments in notes or rhythms, or structural mutations, which generate deeper changes like segment reorganization or duplications. You can also decide which parts of the musical genome will be subject to change and which will remain stable.",
+      "With these rules defined, the system generates a population of musical descendants. Each one is a variation of the original genome.",
+      "Here begins the natural musical selection.",
+      "Listen to each descendant and decide which survive and which go extinct. The survivors become the basis for the next generation.",
+      "Before moving forward, you can choose how the population will reproduce. You can continue with simple inheritance, where a survivor serves as the basis for new mutations, or activate recombination, where two descendants mix their musical genomes before generating new variations.",
+      "Generation after generation, this process produces increasingly complex musical lineages.",
+      "When you have produced enough generations, you can explore the Evolutionary Path. This mode allows you to travel back in time to observe how the composition evolved and compare descendants from different generations.",
+      "You can also activate mutation analysis, which reveals which musical elements have remained conserved and which have changed throughout the evolutionary process.",
+      "Finally, when you find a composition that you consider successful, you can save the complete record of the experiment. This file contains the evolutionary history of the musical genome: its mutations, recombinations, and selection decisions.",
+      "The result is a musical piece that was not simply composed, but cultivated through directed evolution."
+    ],
+    openManual: "Open Detailed Manual",
+    backToGuide: "Back to Quick Guide",
     selectAncestorDesc: "Select one of these 4 unique genetic sequences to begin your evolutionary journey.",
     option: "Option",
     selectThisAncestor: "SELECT THIS ANCESTOR",
@@ -92,18 +119,7 @@ export const translations = {
     styleTechnoDesc: "High-energy 4/4 industrial beat with driving bass and sharp leads.",
     styleAmbientDesc: "Ethereal soundscapes with slow-evolving pads and minimal percussion.",
     styleFunkDesc: "Syncopated rhythmic patterns with groovy basslines and playful melodies.",
-    styleGlitchDesc: "Erratic, high-speed sequences with chaotic pitch shifts and unpredictable timing.",
-    instructions: [
-      "Root Initialization: Click 'Initialize Lab' to generate your first musical sequence. You can choose from 4 distinct 'Root Ancestors', each with a unique genetic profile (Tempo, Density, and Tone).",
-      "Musical Phenotype (Timeline): The central visualization shows the 'genes' of your music. Each block represents a musical event. In Light Mode, these are clear and high-contrast. You can see the layers for Drums, Bass, and Melody.",
-      "Mutation Parameters: Use the left sidebar to influence evolution. 'Mutation Rate' determines how many genes change. 'Simple Mutation' mode performs point mutations (tweaking notes), while 'Structural Mutation' mode performs structural mutations (duplications, inversions, or re-randomization).",
-      "Mutation Focus: Toggle specific filters (Drums, Bass, Melody) to protect certain parts of the genome from mutation while evolving others.",
-      "Evolve & Selection: Clicking 'Evolve' takes you to the 'Selection Chamber'. You can toggle 'Live' or 'Die' for each descendant. Once you've made your choices, click 'Proceed to Next Generation'.",
-      "Recombination: Before proceeding, you can enable 'Recombine survivors'. If active, two random survivors will be hybridized before the next mutation cycle, creating a more diverse lineage.",
-      "Evolutionary Path: The right sidebar tracks every generation. Use 'VIEW PATH' to see the direct ancestry of your current genome. You can click any previous generation to 'time travel' and start a new evolutionary branch from that point.",
-      "Playback Control: Use the global Play/Stop buttons. The engine uses high-quality synthesis to turn the genetic data into sound in real-time.",
-      "Created by Rafik Neme"
-    ]
+    styleGlitchDesc: "Erratic, high-speed sequences with chaotic pitch shifts and unpredictable timing."
   },
   es: {
     title: "Laboratorio de Música Genética",
@@ -144,6 +160,33 @@ export const translations = {
     selectionRoom: "Descendientes",
     selectionDesc: "Han nacido nuevos descendientes. Usa el interruptor para decidir quién sobrevive. Los sobrevivientes se hibridarán para crear la siguiente generación.",
     instructionsTitle: "Instrucciones",
+    quickGuideTitle: "Cómo usar el Laboratorio de Música Genética",
+    quickGuideSteps: [
+      "Elige un ancestro musical: Selecciona una canción inicial que funcionará como el genoma raíz.",
+      "Define cómo ocurrirán las mutaciones: Escoge entre mutación simple (cambios pequeños) o mutación estructural (cambios grandes). Puedes decidir qué partes mutan: melodía, bajo o batería.",
+      "Genera descendientes: El sistema crea varias versiones mutadas de la canción original.",
+      "Selecciona cuáles sobreviven: Escucha cada descendiente y decide cuáles viven y cuáles mueren.",
+      "Evoluciona la siguiente generación: Los sobrevivientes pueden mutar nuevamente o recombinarse entre sí."
+    ],
+    manualTitle: "Manual del laboratorio",
+    manualWelcome: "Bienvenido al Laboratorio de Música Genética",
+    manualIntro: "En este laboratorio la música evoluciona.",
+    manualBody: [
+      "Cada composición se comporta como un genoma musical: puede mutar, heredarse y recombinarse a lo largo de generaciones. El sistema genera poblaciones de variantes musicales y tú actúas como agente de selección, guiando la evolución hacia nuevas formas sonoras.",
+      "El proceso comienza seleccionando una canción inicial, que funciona como el ancestro raíz del experimento. Esta pieza contiene el conjunto original de genes musicales —melodía, bajo y batería— a partir del cual surgirán todas las variaciones.",
+      "Una vez elegido el ancestro, defines cómo evolucionará la música. Puedes aplicar mutaciones simples, que producen pequeños ajustes en notas o ritmos, o mutaciones estructurales, que generan cambios más profundos como reorganización de segmentos o duplicaciones. También puedes decidir qué partes del genoma musical estarán sujetas a cambio y cuáles permanecerán estables.",
+      "Con estas reglas definidas, el sistema genera una población de descendientes musicales. Cada uno es una variación del genoma original.",
+      "Aquí comienza la selección natural musical.",
+      "Escucha cada descendiente y decide cuáles sobreviven y cuáles se extinguen. Los sobrevivientes se convierten en la base para la siguiente generación.",
+      "Antes de avanzar, puedes elegir cómo se reproducirá la población. Puedes continuar con herencia simple, donde un sobreviviente sirve como base para nuevas mutaciones, o activar recombinación, donde dos descendientes mezclan sus genomas musicales antes de generar nuevas variaciones.",
+      "Generación tras generación, este proceso produce linajes musicales cada vez más complejos.",
+      "Cuando hayas producido suficientes generaciones, puedes explorar el Camino Evolutivo. Este modo te permite viajar hacia atrás en el tiempo para observar cómo evolucionó la composición y comparar descendientes de distintas generaciones.",
+      "También puedes activar el análisis de mutaciones, que revela qué elementos musicales han permanecido conservados y cuáles han cambiado a lo largo del proceso evolutivo.",
+      "Finalmente, cuando encuentres una composición que consideres exitosa, puedes guardar el registro completo del experimento. Este archivo contiene la historia evolutiva del genoma musical: sus mutaciones, recombinaciones y decisiones de selección.",
+      "El resultado es una pieza musical que no fue simplemente compuesta, sino cultivada mediante evolución dirigida."
+    ],
+    openManual: "Abrir Manual Detallado",
+    backToGuide: "Volver a Guía Rápida",
     selectAncestorDesc: "Selecciona una de estas 4 secuencias genéticas únicas para comenzar tu viaje evolutivo.",
     option: "Opción",
     selectThisAncestor: "SELECCIONAR ESTE ANCESTRO",
@@ -198,17 +241,6 @@ export const translations = {
     styleTechnoDesc: "Ritmo industrial 4/4 de alta energía con bajos potentes y leads afilados.",
     styleAmbientDesc: "Paisajes sonoros etéreos con pads de evolución lenta y percusión mínima.",
     styleFunkDesc: "Patrones rítmicos sincopados con líneas de bajo con mucho 'groove' y melodías juguetonas.",
-    styleGlitchDesc: "Secuencias erráticas de alta velocidad con saltos de tono caóticos y tiempos impredecibles.",
-    instructions: [
-      "Inicialización Raíz: Haz clic en 'Inicializar Lab' para generar tu primera secuencia. Puedes elegir entre 4 'Ancestros Raíz' distintos, cada uno con un perfil genético único (Tempo, Densidad y Tono).",
-      "Fenotipo Musical (Timeline): La visualización central muestra los 'genes' de tu música. Cada bloque representa un evento musical. En el Modo Claro, estos son nítidos y de alto contraste. Puedes ver las capas de Batería, Bajo y Melodía.",
-      "Parámetros de Mutación: Usa la barra lateral izquierda para influir en la evolución. La 'Tasa de Mutación' determina cuántos genes cambian. El modo 'Mutación simple' realiza mutaciones puntuales (ajuste de notas), mientras que el modo 'Mutación estructural' realiza mutaciones estructurales (duplicaciones, inversiones o re-aleatorización).",
-      "Enfoque de Mutación: Activa filtros específicos (Batería, Bajo, Melodía) para proteger ciertas partes del genoma de la mutación mientras evolucionas otras.",
-      "Evolución y Selección: Al hacer clic en 'Evolucionar' entrarás en la 'Cámara de Selección'. Puedes marcar 'Vivir' o 'Morir' para cada descendiente. Una vez elegidos, pulsa 'Pasar a la Siguiente Generación'.",
-      "Recombinación: Antes de pasar, puedes activar 'Recombinar sobrevivientes'. Si se activa, se hibridarán dos sobrevivientes aleatorios antes del siguiente ciclo de mutación, creando un linaje más diverso.",
-      "Camino Evolutivo: La barra lateral derecha rastrea cada generación. Usa 'VIEW PATH' para ver la ascendencia directa de tu genoma actual. Puedes hacer clic en cualquier generación anterior para 'viajar en el tiempo' y comenzar una nueva rama evolutiva desde ese punto.",
-      "Control de Reproducción: Usa los botones globales de Play/Stop. El motor utiliza síntesis de alta calidad para convertir los datos genéticos en sonido en tiempo real.",
-      "Creado por Rafik Neme"
-    ]
+    styleGlitchDesc: "Secuencias erráticas de alta velocidad con saltos de tono caóticos y tiempos impredecibles."
   }
 };

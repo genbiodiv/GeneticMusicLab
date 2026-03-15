@@ -3,6 +3,8 @@
 ## Propósito
 El **Genetic Music Lab** es un entorno experimental de composición musical basado en principios de biología evolutiva. El objetivo es permitir que los usuarios "cultiven" música, tratando las composiciones como genomas que pueden mutar, heredarse y evolucionar a lo largo de múltiples generaciones.
 
+En este laboratorio, la música no se compone de forma tradicional; se cultiva mediante **evolución dirigida**. El usuario actúa como el agente de selección natural, guiando el linaje sonoro hacia formas cada vez más complejas o estéticas.
+
 ## Conceptos Fundamentales
 
 ### 1. El Genoma Musical
@@ -14,45 +16,42 @@ Cada pieza musical se define por un genoma (`MusicalGenome`) que contiene:
 
 ### 2. Dinámica Evolutiva
 - **Mutación**: Cambios aleatorios en los genes.
-  - **Conservadora**: Pequeños ajustes en el tiempo o tono.
-  - **Radical**: Cambios estructurales, duplicaciones o re-aleatorización completa.
-- **Selección Natural (Cámara de Selección)**: El usuario actúa como la presión selectiva, decidiendo explícitamente qué descendientes sobreviven ("Live") y cuáles son descartados ("Die") antes de avanzar a la siguiente generación.
-- **Hibridación (Recombinación)**: El usuario puede optar por activar la recombinación entre dos supervivientes aleatorios. Si se activa, se genera un híbrido que combina segmentos de ambos genomas parentales antes de aplicar nuevas mutaciones.
+  - **Simple (Conservadora)**: Pequeños ajustes en el tiempo o tono. Preserva la estructura central.
+  - **Estructural (Radical)**: Cambios profundos, duplicaciones, inversiones o re-aleatorización completa de secciones.
+- **Selección Natural (Cámara de Selección)**: El usuario decide explícitamente qué descendientes sobreviven ("Live") y cuáles se extinguen ("Die").
+- **Hibridación (Recombinación)**: Mezcla de genomas de dos sobrevivientes para crear una descendencia con rasgos combinados.
 
 ### 3. Análisis de Mutaciones
 Una herramienta visual que permite identificar la estabilidad genética:
 - **Verde (Conservado)**: Genes presentes en toda la línea ancestral.
-- **Amarillo (Compartido)**: Genes que han persistido en algunas generaciones o provienen de recombinación.
+- **Amarillo (Compartido)**: Genes que han persistido en algunas generaciones.
 - **Rojo (Único)**: Mutaciones nuevas que no existen en los ancestros.
+
+## Manual del Laboratorio
+
+### El Proceso Evolutivo
+1. **Elige un ancestro musical**: Selecciona una canción inicial que funcionará como el genoma raíz. Esta pieza contiene el conjunto original de genes musicales.
+2. **Define las reglas de cambio**: Escoge entre mutación simple o estructural. Puedes decidir qué partes del genoma (melodía, bajo, batería) estarán sujetas a cambio.
+3. **Genera descendientes**: El sistema crea una población de variantes basadas en el genoma original.
+4. **Selección**: Escucha cada descendiente y decide cuáles sobreviven. Los sobrevivientes se convierten en la base para la siguiente generación.
+5. **Herencia y Recombinación**: Los sobrevivientes pueden mutar nuevamente o mezclarse entre sí (recombinación) para generar la siguiente población.
+
+### Camino Evolutivo
+El laboratorio permite explorar el linaje completo. Puedes viajar hacia atrás en el tiempo para observar cómo evolucionó la composición y comparar descendientes de distintas generaciones.
 
 ## Elementos Técnicos
 
 ### Stack Tecnológico
 - **Frontend**: React 18+ con TypeScript.
 - **Audio Engine**: [Tone.js](https://tonejs.github.io/) para síntesis en tiempo real y secuenciación precisa.
-- **Animaciones**: [Framer Motion](https://www.framer.com/motion/) para transiciones fluidas y feedback visual.
-- **Estilos**: Tailwind CSS con un diseño minimalista y bilingüe.
-- **Iconografía**: Lucide React.
+- **Animaciones**: [Framer Motion](https://www.framer.com/motion/) para transiciones fluidas.
+- **Estilos**: Tailwind CSS con diseño minimalista y bilingüe.
 
-### Estructura de Archivos Principal
+### Estructura de Archivos
 - `/src/App.tsx`: Orquestador principal del estado y la UI.
-- `/src/services/evolutionService.ts`: El "motor biológico" que maneja la generación, mutación y recombinación de genomas.
-- `/src/hooks/usePlaybackEngine.ts`: Puente entre el genoma musical y el motor de audio de Tone.js.
-- `/src/components/GenomeTimeline.tsx`: Visualización interactiva del fenotipo musical (el mapa de genes).
-- `/src/translations.ts`: Sistema de internacionalización (EN/ES).
-
-### Configuraciones Específicas
-- **Prevención de Ruidos**: El sistema incluye una lógica de resolución de solapamientos (`resolveOverlaps`) que asegura que dos eventos del mismo instrumento no suenen simultáneamente, evitando saturación y ruidos digitales.
-- **Compatibilidad Móvil**: Implementa un sistema de desbloqueo de audio mediante gestos del usuario para cumplir con las políticas de reproducción de navegadores móviles.
-- **Modo de Análisis**: Capacidad de superponer hasta 5 generaciones simultáneamente para observar la deriva genética visualmente.
-
-## Cómo Jugar
-1. **Inicializar**: Elige un ancestro raíz para comenzar tu linaje.
-2. **Evolucionar**: Ajusta la tasa de mutación y el enfoque (Drums, Bass, Melody) y haz clic en "Evolve".
-3. **Seleccionar**: En la Cámara de Selección, marca cada descendiente como "Vivir" o "Morir".
-4. **Recombinar**: Decide si quieres activar la recombinación entre sobrevivientes antes de pulsar "Pasar a la Siguiente Generación".
-5. **Analizar**: Usa el botón de "Análisis de Mutaciones" para ver qué partes de tu música son ancestrales y cuáles son innovaciones recientes.
-6. **Aprender**: Completa los desafíos de aprendizaje incluidos en el manual de instrucciones.
+- `/src/services/evolutionService.ts`: Motor biológico de mutación y recombinación.
+- `/src/hooks/usePlaybackEngine.ts`: Puente con el motor de audio.
+- `/src/components/GenomeTimeline.tsx`: Visualización interactiva del fenotipo musical.
 
 ---
 *Experimental Bio-Acoustic Research Project &copy; 2026*
