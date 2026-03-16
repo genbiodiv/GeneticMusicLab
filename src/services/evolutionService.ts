@@ -26,15 +26,14 @@ export async function generateInitialGenome(count: number = 4): Promise<MusicalG
       melody: [0.25, 1.25, 2.25, 3.25, 4.25]
     },
     {
-      nameKey: "styleAmbient",
-      summaryKey: "styleAmbientDesc",
-      tempo: 80,
+      nameKey: "styleMinimal",
+      summaryKey: "styleMinimalDesc",
+      tempo: 72,
       drums: [
-        { id: "kick_01", times: [0, 2.5] },
-        { id: "hihat_01", times: [1.25, 3.75] }
+        { id: "hihat_01", times: [0, 2.5] }
       ],
-      bass: [0, 2, 4],
-      melody: [0.5, 1.5, 2.5, 3.5, 4.5]
+      bass: [0, 2.5],
+      melody: [1.25, 3.75]
     },
     {
       nameKey: "styleFunk",

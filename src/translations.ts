@@ -126,11 +126,11 @@ export const translations = {
     saveNow: "Save Now",
     variantDesc: "New genetic sequence following current mutation parameters.",
     styleTechno: "Techno Pulse",
-    styleAmbient: "Ambient Drift",
+    styleMinimal: "Zen Minimalist",
     styleFunk: "Neo-Funk",
     styleGlitch: "Glitch Core",
     styleTechnoDesc: "High-energy 4/4 industrial beat with driving bass and sharp leads.",
-    styleAmbientDesc: "Ethereal soundscapes with slow-evolving pads and minimal percussion.",
+    styleMinimalDesc: "Pure, clean soundscapes with extreme space and very subtle rhythmic pulses.",
     styleFunkDesc: "Syncopated rhythmic patterns with groovy basslines and playful melodies.",
     styleGlitchDesc: "Erratic, high-speed sequences with chaotic pitch shifts and unpredictable timing."
   },
@@ -261,11 +261,11 @@ export const translations = {
     saveNow: "Guardar Ahora",
     variantDesc: "Nueva secuencia genética siguiendo los parámetros actuales.",
     styleTechno: "Pulso Techno",
-    styleAmbient: "Deriva Ambiental",
+    styleMinimal: "Zen Minimalista",
     styleFunk: "Neo-Funk",
     styleGlitch: "Glitch Core",
     styleTechnoDesc: "Ritmo industrial 4/4 de alta energía con bajos potentes y leads afilados.",
-    styleAmbientDesc: "Paisajes sonoros etéreos con pads de evolución lenta y percusión mínima.",
+    styleMinimalDesc: "Paisajes sonoros puros y limpios con mucho espacio y pulsos rítmicos muy sutiles.",
     styleFunkDesc: "Patrones rítmicos sincopados con líneas de bajo con mucho 'groove' y melodías juguetonas.",
     styleGlitchDesc: "Secuencias erráticas de alta velocidad con saltos de tono caóticos y tiempos impredecibles."
   }

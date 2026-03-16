@@ -16,6 +16,7 @@ import { getAccentClasses, AccentColor } from "./utils/theme";
 import { DEFAULT_GENOME, SAMPLE_LIBRARY } from "./constants";
 import { 
   Play, 
+  Pause,
   Square, 
   Dna, 
   History, 
@@ -844,6 +845,30 @@ export default function App() {
                     <p className={`text-xs ${theme === "dark" ? "text-white" : "text-zinc-500"} font-medium`}>{t.structuralMap}</p>
                   </div>
                   <div className="flex gap-2">
+                    {/* Playback Controls */}
+                    <div className="flex items-center gap-1 mr-2 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                      <button
+                        onClick={() => {
+                          if (status === "playing") pause();
+                          else if (status === "paused") resume();
+                          else play(currentGenome);
+                        }}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                          status === "playing" ? "bg-amber-500 text-white" : `${ac.bg600} text-white`
+                        }`}
+                        title={status === "playing" ? t.pause : t.play}
+                      >
+                        {status === "playing" ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+                      </button>
+                      <button
+                        onClick={stop}
+                        className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center hover:bg-red-500 transition-all"
+                        title={t.stop}
+                      >
+                        <Square size={14} fill="currentColor" />
+                      </button>
+                    </div>
+
                     <button 
                       onClick={() => setShowAnalysis(!showAnalysis)}
                       aria-expanded={showAnalysis}
