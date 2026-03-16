@@ -11,6 +11,16 @@ export function usePlaybackEngine() {
   const currentGenomeId = useRef<string | null>(null);
 
   useEffect(() => {
+    // Initialize master chain
+    const limiter = new Tone.Limiter(-1).toDestination();
+    const compressor = new Tone.Compressor({
+      threshold: -20,
+      ratio: 4,
+      attack: 0.01,
+      release: 0.25
+    }).connect(limiter);
+    const masterGain = new Tone.Gain(0.8).connect(compressor);
+
     // Initialize synths based on library
     const initSynths = () => {
       SAMPLE_LIBRARY.forEach((item) => {
@@ -18,27 +28,43 @@ export function usePlaybackEngine() {
         
         switch (item.synthType) {
           case "membrane":
-            synth = new Tone.MembraneSynth().toDestination();
+            synth = new Tone.MembraneSynth({
+              pitchDecay: 0.05,
+              octaves: 10,
+              oscillator: { type: "sine" },
+              envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
+            }).connect(masterGain);
             break;
           case "metal":
             synth = new Tone.MetalSynth({
+              harmonicity: 12,
+              resonance: 800,
+              modulationIndex: 20,
               envelope: { attack: 0.001, decay: 0.1, release: 0.1 }
-            }).toDestination();
+            }).connect(masterGain);
             break;
           case "mono":
             synth = new Tone.MonoSynth({
-              oscillator: { type: "sine" },
-              envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 0.8 }
-            }).toDestination();
+              oscillator: { type: "triangle" },
+              envelope: { attack: 0.05, decay: 0.2, sustain: 0.4, release: 0.8 },
+              filterEnvelope: { attack: 0.001, decay: 0.7, sustain: 0.1, baseFrequency: 200, octaves: 4 }
+            }).connect(masterGain);
             break;
           case "poly":
-            synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            synth = new Tone.PolySynth(Tone.Synth, {
+              oscillator: { type: "sawtooth" },
+              envelope: { attack: 0.1, decay: 0.2, sustain: 0.3, release: 1 }
+            }).connect(masterGain);
             break;
           case "fm":
-            synth = new Tone.FMSynth().toDestination();
+            synth = new Tone.FMSynth({
+              harmonicity: 3,
+              modulationIndex: 10,
+              envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.5 }
+            }).connect(masterGain);
             break;
           default:
-            synth = new Tone.Synth().toDestination();
+            synth = new Tone.Synth().connect(masterGain);
         }
         
         synthsRef.current.set(item.id, synth);
@@ -50,12 +76,25 @@ export function usePlaybackEngine() {
 
     return () => {
       synthsRef.current.forEach(s => s.dispose());
+      masterGain.dispose();
+      compressor.dispose();
+      limiter.dispose();
     };
   }, []);
 
   const stop = () => {
     Tone.Transport.stop();
     Tone.Transport.cancel();
+    
+    // Release all notes on all synths
+    synthsRef.current.forEach(synth => {
+      if (synth.releaseAll) {
+        synth.releaseAll();
+      } else if (synth.triggerRelease) {
+        synth.triggerRelease(Tone.now());
+      }
+    });
+
     setStatus("stopped");
     setCurrentTime(0);
     currentGenomeId.current = null;
@@ -126,7 +165,6 @@ export function usePlaybackEngine() {
       currentGenomeId.current = genome.genomeId;
 
       Tone.Transport.bpm.value = genome.tempo;
-      Tone.Destination.volume.value = -3;
 
       (genome.layers || []).forEach((layer) => {
         (layer.events || []).forEach((event) => {
@@ -150,7 +188,7 @@ export function usePlaybackEngine() {
             stop();
           }
         }, time);
-      }, 0.05);
+      }, 0.1);
 
       Tone.Transport.seconds = 0;
       Tone.Transport.start("+0.1");
